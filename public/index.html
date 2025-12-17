@@ -133,7 +133,7 @@
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect } = React;
+        const { useState } = React;
 
         // Lucide React icons as inline SVG components
         const Camera = ({ size = 24, strokeWidth = 2, className = "" }) => (
@@ -172,6 +172,16 @@
             const [error, setError] = useState('');
             const [albumInfo, setAlbumInfo] = useState(null);
 
+            // Get API URL - use relative path if on same domain, or env variable if available
+            const getApiUrl = () => {
+                // If running locally or on same domain, use relative path
+                if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                    return 'http://localhost:3001';
+                }
+                // Otherwise use the same origin
+                return '';
+            };
+
             const extractAlbumToken = (url) => {
                 const match = url.match(/#([A-Za-z0-9]+)/);
                 return match ? match[1] : null;
@@ -189,17 +199,12 @@
                         throw new Error('Invalid iCloud album URL format');
                     }
 
-                    // iCloud uses a public API endpoint for shared albums
-                    const apiUrl = `https://p56-sharedstreams.icloud.com/${token}/sharedstreams/webstream`;
-                    
-                    const response = await fetch(apiUrl, {
+                    const apiUrl = getApiUrl();
+                    const response = await fetch(`${apiUrl}/api/album/${token}`, {
                         method: 'POST',
                         headers: {
-                            'Content-Type': 'text/plain',
-                        },
-                        body: JSON.stringify({
-                            streamCtag: null
-                        })
+                            'Content-Type': 'application/json',
+                        }
                     });
 
                     if (!response.ok) {
@@ -207,6 +212,9 @@
                     }
 
                     const data = await response.json();
+                    console.log('Album data:', data);
+                    console.log('Sample photo derivatives:', data.photos?.[0]?.derivatives);
+                    console.log('Asset URLs sample:', Object.entries(data.assetUrls || {}).slice(0, 2));
                     
                     if (data.photos && data.photos.length > 0) {
                         setAlbumInfo({
@@ -215,24 +223,44 @@
                         });
 
                         const photoList = data.photos.map(photo => {
-                            const checksum = photo.photoGuid;
                             const derivatives = photo.derivatives || {};
                             
-                            // Try to get the best available thumbnail
+                            // Sort derivatives by width to get smallest for thumbnail, largest for full
+                            const sortedKeys = Object.keys(derivatives).sort((a, b) => {
+                                const aWidth = parseInt(derivatives[a].width) || 0;
+                                const bWidth = parseInt(derivatives[b].width) || 0;
+                                return aWidth - bWidth;
+                            });
+                            
                             let thumbnailUrl = null;
-                            if (derivatives['public.jpeg']) {
-                                const derivative = derivatives['public.jpeg'];
-                                thumbnailUrl = `https://cvws.icloud-content.com/${derivative.fileChecksum}`;
+                            let fullUrl = null;
+                            
+                            // For videos, prefer PosterFrame for thumbnail
+                            if (photo.mediaAssetType === 'video' && derivatives['PosterFrame']?.url) {
+                                thumbnailUrl = derivatives['PosterFrame'].url;
+                            }
+                            
+                            // Find URLs from sorted derivatives
+                            for (const key of sortedKeys) {
+                                const d = derivatives[key];
+                                if (d.url) {
+                                    if (!thumbnailUrl) thumbnailUrl = d.url;
+                                    fullUrl = d.url; // Keep updating to get largest
+                                }
                             }
 
                             return {
-                                id: checksum,
+                                id: photo.photoGuid,
                                 thumbnail: thumbnailUrl,
+                                fullUrl: fullUrl,
                                 caption: photo.caption || '',
-                                dateCreated: photo.batchDateCreated,
-                                derivatives: photo.derivatives
+                                dateCreated: photo.dateCreated,
+                                isVideo: photo.mediaAssetType === 'video'
                             };
                         }).filter(p => p.thumbnail);
+                        
+                        console.log('Processed photos:', photoList.length);
+                        console.log('Sample processed photo:', photoList[0]);
 
                         setPhotos(photoList);
                     } else {
@@ -254,12 +282,14 @@
 
             const downloadImage = async (photo) => {
                 try {
-                    const response = await fetch(photo.thumbnail);
+                    const downloadUrl = photo.fullUrl || photo.thumbnail;
+                    console.log('Downloading:', downloadUrl);
+                    const response = await fetch(downloadUrl);
                     const blob = await response.blob();
                     const url = window.URL.createObjectURL(blob);
                     const a = document.createElement('a');
                     a.href = url;
-                    a.download = `photo-${photo.id}.jpg`;
+                    a.download = `photo-${photo.id}.${photo.isVideo ? 'mp4' : 'jpg'}`;
                     document.body.appendChild(a);
                     a.click();
                     window.URL.revokeObjectURL(url);

@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>iCloud Album Viewer</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Space Mono', monospace;
+            background: linear-gradient(135deg, #0f172a 0%, #581c87 50%, #0f172a 100%);
+            min-height: 100vh;
+        }
+
+        #root {
+            width: 100%;
+        }
+
+        .photo-card {
+            position: relative;
+            overflow: hidden;
+            aspect-ratio: 1;
+            background: rgba(15, 23, 42, 0.5);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .photo-card:hover {
+            transform: scale(1.05);
+            z-index: 10;
+        }
+
+        .photo-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .download-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: rgba(0, 0, 0, 0.7);
+            border: none;
+            border-radius: 4px;
+            padding: 8px;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.2s, background 0.2s;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .photo-card:hover .download-btn {
+            opacity: 1;
+        }
+
+        .download-btn:hover {
+            background: rgba(0, 0, 0, 0.9);
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 16px;
+            padding: 16px;
+        }
+
+        @media (min-width: 640px) {
+            .grid-container {
+                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            }
+        }
+
+        .pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: .5;
+            }
+        }
+
+        .slide-in {
+            animation: slideIn 0.5s ease-out forwards;
+            opacity: 0;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes spin {
+            from {
+                transform: rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .spin {
+            animation: spin 1s linear infinite;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // Lucide React icons as inline SVG components
+        const Camera = ({ size = 24, strokeWidth = 2, className = "" }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className}>
+                <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"></path>
+                <circle cx="12" cy="13" r="3"></circle>
+            </svg>
+        );
+
+        const Download = ({ size = 24, strokeWidth = 2, className = "" }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className}>
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+        );
+
+        const Loader2 = ({ size = 24, strokeWidth = 2, className = "" }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={`spin ${className}`}>
+                <path d="M21 12a9 9 0 1 1-6.219-8.56"></path>
+            </svg>
+        );
+
+        const AlertCircle = ({ size = 24, strokeWidth = 2, className = "" }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className}>
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+        );
+
+        const ICloudAlbumViewer = () => {
+            const [albumUrl, setAlbumUrl] = useState('');
+            const [loading, setLoading] = useState(false);
+            const [photos, setPhotos] = useState([]);
+            const [error, setError] = useState('');
+            const [albumInfo, setAlbumInfo] = useState(null);
+
+            const extractAlbumToken = (url) => {
+                const match = url.match(/#([A-Za-z0-9]+)/);
+                return match ? match[1] : null;
+            };
+
+            const fetchAlbumData = async (url) => {
+                setLoading(true);
+                setError('');
+                setPhotos([]);
+                setAlbumInfo(null);
+
+                try {
+                    const token = extractAlbumToken(url);
+                    if (!token) {
+                        throw new Error('Invalid iCloud album URL format');
+                    }
+
+                    // iCloud uses a public API endpoint for shared albums
+                    const apiUrl = `https://p56-sharedstreams.icloud.com/${token}/sharedstreams/webstream`;
+                    
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'text/plain',
+                        },
+                        body: JSON.stringify({
+                            streamCtag: null
+                        })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch album data');
+                    }
+
+                    const data = await response.json();
+                    
+                    if (data.photos && data.photos.length > 0) {
+                        setAlbumInfo({
+                            name: data.streamName || 'Shared Album',
+                            photoCount: data.photos.length
+                        });
+
+                        const photoList = data.photos.map(photo => {
+                            const checksum = photo.photoGuid;
+                            const derivatives = photo.derivatives || {};
+                            
+                            // Try to get the best available thumbnail
+                            let thumbnailUrl = null;
+                            if (derivatives['public.jpeg']) {
+                                const derivative = derivatives['public.jpeg'];
+                                thumbnailUrl = `https://cvws.icloud-content.com/${derivative.fileChecksum}`;
+                            }
+
+                            return {
+                                id: checksum,
+                                thumbnail: thumbnailUrl,
+                                caption: photo.caption || '',
+                                dateCreated: photo.batchDateCreated,
+                                derivatives: photo.derivatives
+                            };
+                        }).filter(p => p.thumbnail);
+
+                        setPhotos(photoList);
+                    } else {
+                        throw new Error('No photos found in this album');
+                    }
+                } catch (err) {
+                    setError(err.message || 'Failed to load album. Please check the URL and try again.');
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                if (albumUrl.trim()) {
+                    fetchAlbumData(albumUrl);
+                }
+            };
+
+            const downloadImage = async (photo) => {
+                try {
+                    const response = await fetch(photo.thumbnail);
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `photo-${photo.id}.jpg`;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                } catch (err) {
+                    console.error('Download failed:', err);
+                }
+            };
+
+            return (
+                <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #0f172a 0%, #581c87 50%, #0f172a 100%)' }}>
+                    <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '3rem 1rem' }}>
+                        {/* Header */}
+                        <div style={{ textAlign: 'center', marginBottom: '3rem' }} className="slide-in">
+                            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '12px', marginBottom: '1rem' }}>
+                                <Camera size={48} strokeWidth={1.5} style={{ color: '#a855f7' }} />
+                            </div>
+                            <h1 style={{ 
+                                fontFamily: "'Archivo Black', sans-serif",
+                                fontSize: 'clamp(2rem, 5vw, 4rem)',
+                                color: 'white',
+                                marginBottom: '1rem',
+                                letterSpacing: '-0.02em',
+                                textShadow: '0 0 40px rgba(168, 85, 247, 0.4)'
+                            }}>
+                                iCLOUD ALBUM VIEWER
+                            </h1>
+                            <p style={{
+                                fontFamily: "'Space Mono', monospace",
+                                color: 'rgba(255, 255, 255, 0.7)',
+                                fontSize: 'clamp(0.875rem, 2vw, 1.125rem)',
+                                maxWidth: '600px',
+                                margin: '0 auto'
+                            }}>
+                                Paste your shared iCloud album URL to browse and download photos
+                            </p>
+                        </div>
+
+                        {/* Input Form */}
+                        <form onSubmit={handleSubmit} style={{ marginBottom: '3rem', maxWidth: '768px', margin: '0 auto 3rem' }} className="slide-in">
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                <input
+                                    type="text"
+                                    value={albumUrl}
+                                    onChange={(e) => setAlbumUrl(e.target.value)}
+                                    placeholder="https://www.icloud.com/sharedalbum/#..."
+                                    style={{
+                                        padding: '16px 20px',
+                                        background: 'rgba(15, 23, 42, 0.8)',
+                                        border: '2px solid rgba(168, 85, 247, 0.3)',
+                                        borderRadius: '8px',
+                                        color: 'white',
+                                        fontFamily: "'Space Mono', monospace",
+                                        fontSize: '14px',
+                                        outline: 'none',
+                                        transition: 'border-color 0.3s, box-shadow 0.3s',
+                                        width: '100%'
+                                    }}
+                                />
+                                <button
+                                    type="submit"
+                                    disabled={loading || !albumUrl.trim()}
+                                    style={{
+                                        padding: '16px 32px',
+                                        background: loading ? 'rgba(100, 116, 139, 0.8)' : 'linear-gradient(135deg, #a855f7 0%, #7c3aed 100%)',
+                                        border: 'none',
+                                        borderRadius: '8px',
+                                        color: 'white',
+                                        fontFamily: "'Space Mono', monospace",
+                                        fontSize: '14px',
+                                        fontWeight: 'bold',
+                                        cursor: loading || !albumUrl.trim() ? 'not-allowed' : 'pointer',
+                                        transition: 'transform 0.2s, box-shadow 0.2s',
+                                        textTransform: 'uppercase',
+                                        letterSpacing: '0.05em',
+                                        boxShadow: '0 4px 20px rgba(168, 85, 247, 0.3)',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        gap: '8px'
+                                    }}
+                                >
+                                    {loading ? (
+                                        <>
+                                            <Loader2 size={16} className="pulse" />
+                                            <span>Loading</span>
+                                        </>
+                                    ) : (
+                                        'Load Album'
+                                    )}
+                                </button>
+                            </div>
+                        </form>
+
+                        {/* Error Message */}
+                        {error && (
+                            <div style={{
+                                maxWidth: '600px',
+                                margin: '0 auto 2rem',
+                                padding: '16px 20px',
+                                background: 'rgba(239, 68, 68, 0.1)',
+                                border: '2px solid rgba(239, 68, 68, 0.3)',
+                                borderRadius: '8px',
+                                color: '#fca5a5',
+                                fontFamily: "'Space Mono', monospace",
+                                fontSize: '14px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '12px'
+                            }}>
+                                <AlertCircle size={20} />
+                                {error}
+                            </div>
+                        )}
+
+                        {/* Album Info */}
+                        {albumInfo && (
+                            <div style={{ textAlign: 'center', marginBottom: '2rem' }} className="slide-in">
+                                <h2 style={{
+                                    fontFamily: "'Archivo Black', sans-serif",
+                                    color: 'white',
+                                    fontSize: 'clamp(1.5rem, 3vw, 2rem)',
+                                    marginBottom: '0.5rem',
+                                    letterSpacing: '-0.01em'
+                                }}>
+                                    {albumInfo.name}
+                                </h2>
+                                <p style={{
+                                    fontFamily: "'Space Mono', monospace",
+                                    color: 'rgba(255, 255, 255, 0.6)',
+                                    fontSize: '14px'
+                                }}>
+                                    {albumInfo.photoCount} {albumInfo.photoCount === 1 ? 'photo' : 'photos'}
+                                </p>
+                            </div>
+                        )}
+
+                        {/* Photo Grid */}
+                        {photos.length > 0 && (
+                            <div className="grid-container">
+                                {photos.map((photo, index) => (
+                                    <div 
+                                        key={photo.id} 
+                                        className="photo-card slide-in"
+                                        style={{ animationDelay: `${0.3 + (index * 0.03)}s` }}
+                                    >
+                                        <img src={photo.thumbnail} alt={photo.caption || `Photo ${index + 1}`} />
+                                        <button
+                                            className="download-btn"
+                                            onClick={() => downloadImage(photo)}
+                                            title="Download photo"
+                                        >
+                                            <Download size={16} />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {/* Loading State */}
+                        {loading && (
+                            <div style={{ textAlign: 'center', padding: '5rem 0' }}>
+                                <Loader2 size={48} style={{ color: '#a855f7', margin: '0 auto 1rem' }} className="pulse" />
+                                <p style={{
+                                    fontFamily: "'Space Mono', monospace",
+                                    color: 'rgba(255, 255, 255, 0.6)',
+                                    fontSize: '14px'
+                                }}>
+                                    Loading album...
+                                </p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<ICloudAlbumViewer />);
+    </script>
+</body>
+</html>

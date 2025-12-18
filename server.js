@@ -81,6 +81,27 @@ app.post('/api/album/:token', async (req, res) => {
     console.log(`Album: ${streamData.streamName || 'Unknown'}`);
     console.log(`Photos: ${streamData.photos?.length || 0}`);
 
+    // Log sample video to see duration field
+    if (streamData.photos && streamData.photos.length > 0) {
+      const sampleVideo = streamData.photos.find(p => p.mediaAssetType === 'video');
+      if (sampleVideo) {
+        console.log(`Sample video fields:`, Object.keys(sampleVideo));
+        console.log(`Sample video data:`, JSON.stringify({
+          photoGuid: sampleVideo.photoGuid,
+          mediaAssetType: sampleVideo.mediaAssetType,
+          duration: sampleVideo.duration,
+          // Log any other potential duration fields
+          ...Object.fromEntries(
+            Object.entries(sampleVideo).filter(([k]) => 
+              k.toLowerCase().includes('duration') || 
+              k.toLowerCase().includes('length') ||
+              k.toLowerCase().includes('time')
+            )
+          )
+        }, null, 2));
+      }
+    }
+
     if (streamData.photos && streamData.photos.length > 0) {
       // Collect photoGuids (NOT checksums!)
       const photoGuids = streamData.photos.map(p => p.photoGuid);

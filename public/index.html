@@ -70,6 +70,32 @@
             animation: fadeIn 0.3s ease forwards;
         }
 
+        .photo-card:hover .thumbnail-download {
+            opacity: 1 !important;
+        }
+
+        .loading-dots {
+            display: inline-flex;
+            gap: 2px;
+        }
+
+        .loading-dots span {
+            animation: dotFade 1.4s ease-in-out infinite;
+        }
+
+        .loading-dots span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .loading-dots span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes dotFade {
+            0%, 100% { opacity: 0.2; }
+            50% { opacity: 1; }
+        }
+
         input[type="range"] {
             -webkit-appearance: none;
             appearance: none;
@@ -106,47 +132,47 @@
 
         // Icons
         const Sun = ({ size = 24 }) => (
-            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="5"/>
-                <line x1="12" y1="1" x2="12" y2="3"/>
-                <line x1="12" y1="21" x2="12" y2="23"/>
-                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
-                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
-                <line x1="1" y1="12" x2="3" y2="12"/>
-                <line x1="21" y1="12" x2="23" y2="12"/>
-                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
-                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="4"/>
+                <path d="M12 2v2"/>
+                <path d="M12 20v2"/>
+                <path d="m4.93 4.93 1.41 1.41"/>
+                <path d="m17.66 17.66 1.41 1.41"/>
+                <path d="M2 12h2"/>
+                <path d="M20 12h2"/>
+                <path d="m6.34 17.66-1.41 1.41"/>
+                <path d="m19.07 4.93-1.41 1.41"/>
             </svg>
         );
 
         const Moon = ({ size = 24 }) => (
-            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
             </svg>
         );
 
         const Plus = ({ size = 24 }) => (
-            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="12" y1="5" x2="12" y2="19"/>
                 <line x1="5" y1="12" x2="19" y2="12"/>
             </svg>
         );
 
         const Minus = ({ size = 24 }) => (
-            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="5" y1="12" x2="19" y2="12"/>
             </svg>
         );
 
         const ArrowLeft = ({ size = 24 }) => (
-            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="19" y1="12" x2="5" y2="12"/>
-                <polyline points="12 19 5 12 12 5"/>
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="m12 19-7-7 7-7"/>
+                <path d="M19 12H5"/>
             </svg>
         );
 
         const Download = ({ size = 24 }) => (
-            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
                 <polyline points="7 10 12 15 17 10"/>
                 <line x1="12" y1="15" x2="12" y2="3"/>
@@ -156,6 +182,28 @@
         const Play = ({ size = 24 }) => (
             <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" stroke="none">
                 <polygon points="5 3 19 12 5 21 5 3"/>
+            </svg>
+        );
+
+        const CalendarArrowDown = ({ size = 24 }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="m14 18 4 4 4-4"/>
+                <path d="M16 2v4"/>
+                <path d="M18 14v8"/>
+                <path d="M21 11.354V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h7.343"/>
+                <path d="M3 10h18"/>
+                <path d="M8 2v4"/>
+            </svg>
+        );
+
+        const CalendarArrowUp = ({ size = 24 }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="m14 18 4-4 4 4"/>
+                <path d="M16 2v4"/>
+                <path d="M18 22v-8"/>
+                <path d="M21 11.343V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h7.343"/>
+                <path d="M3 10h18"/>
+                <path d="M8 2v4"/>
             </svg>
         );
 
@@ -170,10 +218,72 @@
             const [darkMode, setDarkMode] = useState(false);
             const [columns, setColumns] = useState(6);
             const [selectedPhoto, setSelectedPhoto] = useState(null);
+            const [sortOrder, setSortOrder] = useState('newest');
+            const [videoDurations, setVideoDurations] = useState({});
+
+            // Format duration in mm:ss
+            const formatDuration = (seconds) => {
+                if (!seconds) return null;
+                const mins = Math.floor(seconds / 60);
+                const secs = Math.floor(seconds % 60);
+                return `${mins}:${secs.toString().padStart(2, '0')}`;
+            };
+
+            // Sort photos based on current sort order
+            const sortedPhotos = React.useMemo(() => {
+                if (!photos.length) return photos;
+                return [...photos].sort((a, b) => {
+                    const dateA = a.dateCreated || a.batchDateCreated || '0';
+                    const dateB = b.dateCreated || b.batchDateCreated || '0';
+                    return sortOrder === 'newest' 
+                        ? dateB.localeCompare(dateA)
+                        : dateA.localeCompare(dateB);
+                });
+            }, [photos, sortOrder]);
 
             useEffect(() => {
                 document.body.className = darkMode ? 'dark' : 'light';
             }, [darkMode]);
+
+            // Load video durations by creating hidden video elements
+            useEffect(() => {
+                if (photos.length === 0) return;
+                
+                const videos = photos.filter(p => p.isVideo && p.videoUrl);
+                videos.forEach(video => {
+                    if (videoDurations[video.id]) return;
+                    
+                    const videoEl = document.createElement('video');
+                    videoEl.preload = 'metadata';
+                    videoEl.src = video.videoUrl;
+                    videoEl.onloadedmetadata = () => {
+                        setVideoDurations(prev => ({
+                            ...prev,
+                            [video.id]: videoEl.duration
+                        }));
+                    };
+                });
+            }, [photos]);
+
+            // Keyboard navigation for overlay
+            useEffect(() => {
+                if (!selectedPhoto) return;
+
+                const handleKeyDown = (e) => {
+                    const currentIndex = sortedPhotos.findIndex(p => p.id === selectedPhoto.id);
+                    
+                    if (e.key === 'ArrowLeft' && currentIndex > 0) {
+                        setSelectedPhoto(sortedPhotos[currentIndex - 1]);
+                    } else if (e.key === 'ArrowRight' && currentIndex < sortedPhotos.length - 1) {
+                        setSelectedPhoto(sortedPhotos[currentIndex + 1]);
+                    } else if (e.key === 'Escape') {
+                        setSelectedPhoto(null);
+                    }
+                };
+
+                window.addEventListener('keydown', handleKeyDown);
+                return () => window.removeEventListener('keydown', handleKeyDown);
+            }, [selectedPhoto, sortedPhotos]);
 
             const getApiUrl = () => {
                 if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
@@ -229,6 +339,7 @@
                             
                             let thumbnailUrl = null;
                             let fullUrl = null;
+                            let videoUrl = null;
                             
                             if (photo.mediaAssetType === 'video' && derivatives['PosterFrame']?.url) {
                                 thumbnailUrl = derivatives['PosterFrame'].url;
@@ -241,18 +352,39 @@
                                     fullUrl = d.url;
                                 }
                             }
+                            
+                            // For videos, get the actual video URL (not poster frame)
+                            if (photo.mediaAssetType === 'video') {
+                                // Look for video derivatives (usually 720p, 360p, etc.)
+                                for (const key of sortedKeys) {
+                                    const d = derivatives[key];
+                                    if (d.url && key !== 'PosterFrame') {
+                                        videoUrl = d.url;
+                                    }
+                                }
+                            }
 
                             return {
                                 id: photo.photoGuid,
                                 thumbnail: thumbnailUrl,
                                 fullUrl: fullUrl,
+                                videoUrl: videoUrl,
                                 caption: photo.caption || '',
                                 dateCreated: photo.dateCreated,
+                                batchDateCreated: photo.batchDateCreated,
                                 isVideo: photo.mediaAssetType === 'video',
+                                duration: photo.duration ? parseFloat(photo.duration) : null,
                                 width: parseInt(photo.width) || 1,
                                 height: parseInt(photo.height) || 1
                             };
                         }).filter(p => p.thumbnail);
+
+                        // Sort by date (newest first by default)
+                        photoList.sort((a, b) => {
+                            const dateA = a.dateCreated || a.batchDateCreated || '0';
+                            const dateB = b.dateCreated || b.batchDateCreated || '0';
+                            return dateB.localeCompare(dateA);
+                        });
 
                         setPhotos(photoList);
                     } else {
@@ -280,13 +412,16 @@
             const downloadImage = async (photo, e) => {
                 e?.stopPropagation();
                 try {
-                    const downloadUrl = photo.fullUrl || photo.thumbnail;
+                    // Use videoUrl for videos, fullUrl for images
+                    const downloadUrl = photo.isVideo 
+                        ? (photo.videoUrl || photo.fullUrl) 
+                        : (photo.fullUrl || photo.thumbnail);
                     const response = await fetch(downloadUrl);
                     const blob = await response.blob();
                     const url = window.URL.createObjectURL(blob);
                     const a = document.createElement('a');
                     a.href = url;
-                    a.download = `photo-${photo.id}.${photo.isVideo ? 'mp4' : 'jpg'}`;
+                    a.download = `${photo.isVideo ? 'video' : 'photo'}-${photo.id}.${photo.isVideo ? 'mp4' : 'jpg'}`;
                     document.body.appendChild(a);
                     a.click();
                     window.URL.revokeObjectURL(url);
@@ -358,7 +493,7 @@
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
-                    padding: '16px 20px',
+                    padding: '8px 20px',
                     background: darkMode ? 'rgba(0,0,0,0.8)' : 'rgba(255,255,255,0.8)',
                     backdropFilter: 'blur(20px)',
                     WebkitBackdropFilter: 'blur(20px)',
@@ -421,6 +556,34 @@
                     alignItems: 'center',
                     justifyContent: 'center',
                     color: '#fff'
+                },
+                videoDuration: {
+                    position: 'absolute',
+                    bottom: '6px',
+                    right: '6px',
+                    background: 'rgba(0,0,0,0.6)',
+                    borderRadius: '4px',
+                    padding: '2px 6px',
+                    fontSize: '11px',
+                    fontWeight: 500,
+                    color: '#fff',
+                    fontVariantNumeric: 'tabular-nums'
+                },
+                thumbnailDownload: {
+                    position: 'absolute',
+                    top: '6px',
+                    right: '6px',
+                    background: 'rgba(0,0,0,0.6)',
+                    borderRadius: '6px',
+                    padding: '6px',
+                    border: 'none',
+                    cursor: 'pointer',
+                    color: '#fff',
+                    opacity: 0,
+                    transition: 'opacity 0.2s',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
                 },
                 zoomControls: {
                     position: 'fixed',
@@ -555,19 +718,32 @@
                             <header style={styles.header}>
                                 <div style={styles.headerLeft}>
                                     <span style={styles.albumTitle}>
-                                        {albumInfo?.name || 'Loading...'}
+                                        {loading ? (
+                                            <span>iCloud Album Loading<span className="loading-dots"><span>.</span><span>.</span><span>.</span></span></span>
+                                        ) : (
+                                            albumInfo?.name || 'Shared Album'
+                                        )}
                                     </span>
                                     <span style={styles.photoCount}>
-                                        {albumInfo ? `${albumInfo.photoCount} photos` : ''}
+                                        {!loading && albumInfo ? `${albumInfo.photoCount} photos` : ''}
                                     </span>
                                 </div>
-                                <button 
-                                    style={styles.themeToggle}
-                                    onClick={() => setDarkMode(!darkMode)}
-                                    title={darkMode ? 'Light mode' : 'Dark mode'}
-                                >
-                                    {darkMode ? <Sun size={20} /> : <Moon size={20} />}
-                                </button>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                    <button 
+                                        style={styles.themeToggle}
+                                        onClick={() => setSortOrder(s => s === 'newest' ? 'oldest' : 'newest')}
+                                        title={sortOrder === 'newest' ? 'Showing newest first' : 'Showing oldest first'}
+                                    >
+                                        {sortOrder === 'newest' ? <CalendarArrowDown size={20} /> : <CalendarArrowUp size={20} />}
+                                    </button>
+                                    <button 
+                                        style={styles.themeToggle}
+                                        onClick={() => setDarkMode(!darkMode)}
+                                        title={darkMode ? 'Light mode' : 'Dark mode'}
+                                    >
+                                        {darkMode ? <Sun size={20} /> : <Moon size={20} />}
+                                    </button>
+                                </div>
                             </header>
 
                             {/* Photo Grid or Skeleton */}
@@ -575,9 +751,10 @@
                                 <SkeletonGrid />
                             ) : (
                                 <div style={styles.grid}>
-                                    {photos.map((photo) => (
+                                    {sortedPhotos.map((photo) => (
                                         <div 
                                             key={photo.id}
+                                            className="photo-card"
                                             style={styles.photoCard}
                                             onClick={() => setSelectedPhoto(photo)}
                                         >
@@ -599,9 +776,24 @@
                                                 }}
                                                 onLoad={() => handleImageLoad(photo.id)}
                                             />
+                                            {loadedPhotos[photo.id] && (
+                                                <button
+                                                    className="thumbnail-download"
+                                                    style={styles.thumbnailDownload}
+                                                    onClick={(e) => downloadImage(photo, e)}
+                                                    title="Download"
+                                                >
+                                                    <Download size={14} />
+                                                </button>
+                                            )}
                                             {photo.isVideo && loadedPhotos[photo.id] && (
                                                 <div style={styles.videoIndicator}>
                                                     <Play size={16} />
+                                                </div>
+                                            )}
+                                            {photo.isVideo && videoDurations[photo.id] && loadedPhotos[photo.id] && (
+                                                <div style={styles.videoDuration}>
+                                                    {formatDuration(videoDurations[photo.id])}
                                                 </div>
                                             )}
                                         </div>
@@ -610,7 +802,7 @@
                             )}
 
                             {/* Zoom Controls */}
-                            {!loading && photos.length > 0 && (
+                            {!loading && sortedPhotos.length > 0 && (
                                 <div style={styles.zoomControls}>
                                     <button 
                                         style={styles.zoomButton}
@@ -639,7 +831,7 @@
                         </>
                     )}
 
-                    {/* Full Image Overlay */}
+                    {/* Full Image/Video Overlay */}
                     {selectedPhoto && (
                         <div style={styles.overlay} className="fade-in">
                             <div style={styles.overlayHeader}>
@@ -658,11 +850,21 @@
                                     <Download size={22} />
                                 </button>
                             </div>
-                            <img
-                                src={selectedPhoto.fullUrl || selectedPhoto.thumbnail}
-                                alt={selectedPhoto.caption || ''}
-                                style={styles.overlayImage}
-                            />
+                            {selectedPhoto.isVideo ? (
+                                <video
+                                    src={selectedPhoto.videoUrl || selectedPhoto.fullUrl}
+                                    style={styles.overlayImage}
+                                    controls
+                                    autoPlay
+                                    playsInline
+                                />
+                            ) : (
+                                <img
+                                    src={selectedPhoto.fullUrl || selectedPhoto.thumbnail}
+                                    alt={selectedPhoto.caption || ''}
+                                    style={styles.overlayImage}
+                                />
+                            )}
                         </div>
                     )}
                 </div>

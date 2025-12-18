@@ -7,6 +7,7 @@
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
@@ -138,6 +139,10 @@
 
         .photo-card:hover .thumbnail-download {
             opacity: 1 !important;
+        }
+
+        .download-menu-item:hover {
+            background: rgba(0, 122, 255, 0.1) !important;
         }
 
         .loading-dots {
@@ -354,6 +359,35 @@
             </svg>
         );
 
+        const ChevronDown = ({ size = 24 }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="6 9 12 15 18 9"/>
+            </svg>
+        );
+
+        const Camera = ({ size = 24 }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/>
+                <circle cx="12" cy="13" r="3"/>
+            </svg>
+        );
+
+        const Video = ({ size = 24 }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.87a.5.5 0 0 0-.752-.432L16 10.5"/>
+                <rect x="2" y="6" width="14" height="12" rx="2"/>
+            </svg>
+        );
+
+        const Server = ({ size = 24 }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect width="20" height="8" x="2" y="2" rx="2" ry="2"/>
+                <rect width="20" height="8" x="2" y="14" rx="2" ry="2"/>
+                <line x1="6" x2="6.01" y1="6" y2="6"/>
+                <line x1="6" x2="6.01" y1="18" y2="18"/>
+            </svg>
+        );
+
         const ICloudAlbumViewer = () => {
             const [albumUrl, setAlbumUrl] = useState('');
             const [loading, setLoading] = useState(false);
@@ -390,6 +424,9 @@
             const [previousPhoto, setPreviousPhoto] = useState(null);
             const [overlayLoadedPhotos, setOverlayLoadedPhotos] = useState({});
             const videoRef = useRef(null);
+            const downloadMenuRef = useRef(null);
+            const [showDownloadMenu, setShowDownloadMenu] = useState(false);
+            const [isDownloading, setIsDownloading] = useState(false);
 
             // Update grid padding and square size when columns change
             useEffect(() => {
@@ -427,6 +464,15 @@
                         : dateA.localeCompare(dateB);
                 });
             }, [photos, sortOrder]);
+
+            // Calculate image and video counts
+            const imageCount = React.useMemo(() => {
+                return sortedPhotos.filter(p => !p.isVideo).length;
+            }, [sortedPhotos]);
+
+            const videoCount = React.useMemo(() => {
+                return sortedPhotos.filter(p => p.isVideo).length;
+            }, [sortedPhotos]);
 
             useEffect(() => {
                 document.body.className = darkMode ? 'dark' : 'light';
@@ -579,6 +625,24 @@
                     });
                 }
             }, [selectedPhoto, overlayLoadedPhotos, swipeDirection]);
+
+            // Close download menu when clicking outside
+            useEffect(() => {
+                if (!showDownloadMenu) return;
+
+                const handleClickOutside = (e) => {
+                    if (downloadMenuRef.current && !downloadMenuRef.current.contains(e.target)) {
+                        setShowDownloadMenu(false);
+                    }
+                };
+
+                // Use timeout to avoid closing immediately on the same click that opened it
+                setTimeout(() => {
+                    document.addEventListener('click', handleClickOutside);
+                }, 0);
+                
+                return () => document.removeEventListener('click', handleClickOutside);
+            }, [showDownloadMenu]);
 
             const getApiUrl = () => {
                 if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
@@ -773,6 +837,59 @@
                     document.body.removeChild(a);
                 } catch (err) {
                     console.error('Download failed:', err);
+                }
+            };
+
+            const downloadBulk = async (type) => {
+                setShowDownloadMenu(false);
+                setIsDownloading(true);
+
+                try {
+                    const zip = new JSZip();
+                    const apiUrl = getApiUrl();
+                    
+                    // Filter photos based on type
+                    let photosToDownload = [];
+                    if (type === 'images') {
+                        photosToDownload = sortedPhotos.filter(p => !p.isVideo);
+                    } else if (type === 'videos') {
+                        photosToDownload = sortedPhotos.filter(p => p.isVideo);
+                    } else {
+                        photosToDownload = sortedPhotos;
+                    }
+
+                    // Download each file and add to zip
+                    for (let i = 0; i < photosToDownload.length; i++) {
+                        const photo = photosToDownload[i];
+                        const mediaUrl = photo.isVideo 
+                            ? (photo.videoUrl || photo.fullUrl) 
+                            : (photo.fullUrl || photo.thumbnail);
+                        
+                        try {
+                            const response = await fetch(`${apiUrl}/api/download?url=${encodeURIComponent(mediaUrl)}`);
+                            const blob = await response.blob();
+                            const extension = photo.isVideo ? 'mp4' : 'jpg';
+                            const filename = `${photo.isVideo ? 'video' : 'photo'}-${i + 1}.${extension}`;
+                            zip.file(filename, blob);
+                        } catch (err) {
+                            console.error(`Failed to download ${photo.id}:`, err);
+                        }
+                    }
+
+                    // Generate and download zip
+                    const content = await zip.generateAsync({ type: 'blob' });
+                    const url = URL.createObjectURL(content);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `${albumInfo?.name || 'album'}-${type}.zip`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                } catch (err) {
+                    console.error('Bulk download failed:', err);
+                } finally {
+                    setIsDownloading(false);
                 }
             };
 
@@ -1024,6 +1141,53 @@
                 loadingIndicator: {
                     color: darkMode ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)'
                 },
+                downloadMenuContainer: {
+                    position: 'relative'
+                },
+                downloadButton: {
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    padding: '8px',
+                    borderRadius: '8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    color: darkMode ? '#f5f5f7' : '#1d1d1f',
+                    transition: 'background 0.2s',
+                    fontSize: '14px',
+                    fontWeight: 500
+                },
+                downloadMenu: {
+                    position: 'absolute',
+                    top: 'calc(100% + 4px)',
+                    right: 0,
+                    background: darkMode ? '#1c1c1e' : '#fff',
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                    border: `1px solid ${darkMode ? '#333' : '#e5e5e5'}`,
+                    minWidth: '220px',
+                    overflow: 'hidden',
+                    zIndex: 100
+                },
+                downloadMenuItem: {
+                    padding: '10px 16px',
+                    cursor: 'pointer',
+                    background: 'transparent',
+                    border: 'none',
+                    width: '100%',
+                    textAlign: 'left',
+                    fontSize: '14px',
+                    color: darkMode ? '#f5f5f7' : '#1d1d1f',
+                    transition: 'background 0.2s',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                },
+                downloadCount: {
+                    opacity: 0.7,
+                    fontSize: '13px'
+                },
                 error: {
                     color: '#ff3b30',
                     marginTop: '1rem',
@@ -1091,6 +1255,63 @@
                                     </span>
                                 </div>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                    <div style={styles.downloadMenuContainer} ref={downloadMenuRef}>
+                                        <button 
+                                            style={styles.downloadButton}
+                                            onClick={() => setShowDownloadMenu(!showDownloadMenu)}
+                                            title="Download options"
+                                            disabled={isDownloading}
+                                        >
+                                            {isDownloading ? (
+                                                <>
+                                                    <div className="loading-dots">
+                                                        <span>.</span>
+                                                        <span>.</span>
+                                                        <span>.</span>
+                                                    </div>
+                                                </>
+                                            ) : (
+                                                <Download size={20} />
+                                            )}
+                                        </button>
+                                        {showDownloadMenu && !isDownloading && (
+                                            <div style={styles.downloadMenu}>
+                                                <button 
+                                                    className="download-menu-item"
+                                                    style={styles.downloadMenuItem}
+                                                    onClick={() => downloadBulk('images')}
+                                                >
+                                                    <Camera size={20} />
+                                                    <span>
+                                                        Download Images{' '}
+                                                        <span style={styles.downloadCount}>({imageCount})</span>
+                                                    </span>
+                                                </button>
+                                                <button 
+                                                    className="download-menu-item"
+                                                    style={styles.downloadMenuItem}
+                                                    onClick={() => downloadBulk('videos')}
+                                                >
+                                                    <Video size={20} />
+                                                    <span>
+                                                        Download Videos{' '}
+                                                        <span style={styles.downloadCount}>({videoCount})</span>
+                                                    </span>
+                                                </button>
+                                                <button 
+                                                    className="download-menu-item"
+                                                    style={styles.downloadMenuItem}
+                                                    onClick={() => downloadBulk('all')}
+                                                >
+                                                    <Server size={20} />
+                                                    <span>
+                                                        Download All{' '}
+                                                        <span style={styles.downloadCount}>({sortedPhotos.length})</span>
+                                                    </span>
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
                                     <button 
                                         style={styles.themeToggle}
                                         onClick={() => setSortOrder(s => s === 'newest' ? 'oldest' : 'newest')}

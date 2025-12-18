@@ -67,6 +67,26 @@
             to { opacity: 1; }
         }
 
+        @keyframes scaleIn {
+            from {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.8);
+            }
+            to {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1);
+            }
+        }
+
+        @keyframes quickFadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
         @keyframes swipeOutLeft {
             0% {
                 transform: translate(-50%, -50%) scale(1);
@@ -135,6 +155,14 @@
 
         .fade-in {
             animation: fadeIn 0.3s ease forwards;
+        }
+
+        .scale-in {
+            animation: scaleIn 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+        }
+
+        .quick-fade-in {
+            animation: quickFadeIn 0.2s ease forwards;
         }
 
         .photo-card:hover .thumbnail-download {
@@ -427,6 +455,7 @@
             const downloadMenuRef = useRef(null);
             const [showDownloadMenu, setShowDownloadMenu] = useState(false);
             const [isDownloading, setIsDownloading] = useState(false);
+            const [isOpeningFromGrid, setIsOpeningFromGrid] = useState(false);
 
             // Update grid padding and square size when columns change
             useEffect(() => {
@@ -625,6 +654,17 @@
                     });
                 }
             }, [selectedPhoto, overlayLoadedPhotos, swipeDirection]);
+
+            // Track if opening from grid (not navigating)
+            useEffect(() => {
+                if (selectedPhoto && !previousPhoto && !swipeDirection) {
+                    setIsOpeningFromGrid(true);
+                    // Reset after animation completes
+                    setTimeout(() => {
+                        setIsOpeningFromGrid(false);
+                    }, 400);
+                }
+            }, [selectedPhoto]);
 
             // Close download menu when clicking outside
             useEffect(() => {
@@ -1519,7 +1559,8 @@
                                     }}
                                     className={
                                         swipeDirection === 'left' ? 'swipe-in-from-right' :
-                                        swipeDirection === 'right' ? 'swipe-in-from-left' : ''
+                                        swipeDirection === 'right' ? 'swipe-in-from-left' : 
+                                        isOpeningFromGrid ? 'scale-in' : ''
                                     }
                                 >
                                     <div style={styles.loadingIndicator} className="loading-spinner">
@@ -1545,7 +1586,8 @@
                                     }}
                                     className={
                                         swipeDirection === 'left' ? 'swipe-in-from-right' :
-                                        swipeDirection === 'right' ? 'swipe-in-from-left' : ''
+                                        swipeDirection === 'right' ? 'swipe-in-from-left' : 
+                                        isOpeningFromGrid ? 'scale-in' : ''
                                     }
                                     controls
                                     playsInline
@@ -1562,7 +1604,8 @@
                                     }}
                                     className={
                                         swipeDirection === 'left' ? 'swipe-in-from-right' :
-                                        swipeDirection === 'right' ? 'swipe-in-from-left' : ''
+                                        swipeDirection === 'right' ? 'swipe-in-from-left' : 
+                                        isOpeningFromGrid ? 'scale-in' : ''
                                     }
                                     onLoad={() => handleOverlayImageLoad(selectedPhoto.id)}
                                 />

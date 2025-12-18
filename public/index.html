@@ -231,17 +231,25 @@
                 return '4px';
             };
 
-            const [gridPadding, setGridPadding] = useState(getGridPadding());
+            // Calculate approximate square size for conditional rendering
+            const getSquareSize = () => {
+                return (typeof window !== 'undefined' ? window.innerWidth : 1200) / columns;
+            };
 
-            // Update grid padding when columns change
+            const [gridPadding, setGridPadding] = useState(getGridPadding());
+            const [squareSize, setSquareSize] = useState(getSquareSize());
+
+            // Update grid padding and square size when columns change
             useEffect(() => {
                 setGridPadding(getGridPadding());
+                setSquareSize(getSquareSize());
             }, [columns]);
 
-            // Update grid padding on window resize
+            // Update grid padding and square size on window resize
             useEffect(() => {
                 const handleResize = () => {
                     setGridPadding(getGridPadding());
+                    setSquareSize(getSquareSize());
                 };
                 
                 window.addEventListener('resize', handleResize);
@@ -847,7 +855,7 @@
                                                     <Play size={16} />
                                                 </div>
                                             )}
-                                            {photo.isVideo && videoDurations[photo.id] && loadedPhotos[photo.id] && (
+                                            {photo.isVideo && videoDurations[photo.id] && loadedPhotos[photo.id] && squareSize >= 48 && (
                                                 <div style={styles.videoDuration}>
                                                     {formatDuration(videoDurations[photo.id])}
                                                 </div>

@@ -331,6 +331,46 @@
                 return () => window.removeEventListener('keydown', handleKeyDown);
             }, [selectedPhoto, sortedPhotos]);
 
+            // Touch swipe navigation for overlay
+            useEffect(() => {
+                if (!selectedPhoto) return;
+
+                let touchStartX = 0;
+                let touchEndX = 0;
+                const minSwipeDistance = 50; // minimum distance for a swipe
+
+                const handleTouchStart = (e) => {
+                    touchStartX = e.changedTouches[0].screenX;
+                };
+
+                const handleTouchEnd = (e) => {
+                    touchEndX = e.changedTouches[0].screenX;
+                    handleSwipe();
+                };
+
+                const handleSwipe = () => {
+                    const swipeDistance = touchStartX - touchEndX;
+                    const currentIndex = sortedPhotos.findIndex(p => p.id === selectedPhoto.id);
+
+                    // Swipe left (next photo)
+                    if (swipeDistance > minSwipeDistance && currentIndex < sortedPhotos.length - 1) {
+                        setSelectedPhoto(sortedPhotos[currentIndex + 1]);
+                    }
+                    // Swipe right (previous photo)
+                    else if (swipeDistance < -minSwipeDistance && currentIndex > 0) {
+                        setSelectedPhoto(sortedPhotos[currentIndex - 1]);
+                    }
+                };
+
+                window.addEventListener('touchstart', handleTouchStart);
+                window.addEventListener('touchend', handleTouchEnd);
+
+                return () => {
+                    window.removeEventListener('touchstart', handleTouchStart);
+                    window.removeEventListener('touchend', handleTouchEnd);
+                };
+            }, [selectedPhoto, sortedPhotos]);
+
             const getApiUrl = () => {
                 if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
                     return 'http://localhost:3001';

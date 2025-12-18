@@ -245,6 +245,17 @@
                 document.body.className = darkMode ? 'dark' : 'light';
             }, [darkMode]);
 
+
+            useEffect(() => {
+                const token = getTokenFromHash();
+                if (token) {
+                    const albumLink = `https://www.icloud.com/sharedalbum/#${token}`;
+                    setAlbumUrl(albumLink);
+                    fetchAlbumData(albumLink);
+                }
+            }, []);
+
+
             // Load video durations by creating hidden video elements
             useEffect(() => {
                 if (photos.length === 0) return;
@@ -296,6 +307,20 @@
                 const match = url.match(/#([A-Za-z0-9]+)/);
                 return match ? match[1] : null;
             };
+
+
+            const getTokenFromHash = () => {
+                const hash = window.location.hash;
+                return hash && hash.length > 1 ? hash.substring(1) : null;
+            };
+
+            const updateHashFromUrl = (url) => {
+                const token = extractAlbumToken(url);
+                if (token) {
+                    window.location.hash = token;
+                }
+            };
+
 
             const fetchAlbumData = async (url) => {
                 setShowLanding(false);
@@ -400,9 +425,9 @@
 
             const handleSubmit = (e) => {
                 e.preventDefault();
-                if (albumUrl.trim()) {
-                    fetchAlbumData(albumUrl);
-                }
+                if (!albumUrl.trim()) return;
+                updateHashFromUrl(albumUrl);
+                fetchAlbumData(albumUrl);
             };
 
             const handleImageLoad = (photoId) => {

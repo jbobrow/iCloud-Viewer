@@ -9,7 +9,7 @@
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
         * {
             box-sizing: border-box;
@@ -18,150 +18,144 @@
         }
         
         body {
-            font-family: 'Space Mono', monospace;
-            background: linear-gradient(135deg, #0f172a 0%, #581c87 50%, #0f172a 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
             min-height: 100vh;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        body.light {
+            background-color: #ffffff;
+            color: #1d1d1f;
+        }
+
+        body.dark {
+            background-color: #000000;
+            color: #f5f5f7;
         }
 
         #root {
             width: 100%;
+            min-height: 100vh;
         }
 
-        .photo-card {
-            position: relative;
-            overflow: hidden;
-            aspect-ratio: 1;
-            background: rgba(15, 23, 42, 0.5);
-            border-radius: 4px;
+        .fade-out {
+            opacity: 0;
+            transform: scale(0.98);
+            transition: opacity 0.4s ease, transform 0.4s ease;
+            pointer-events: none;
+        }
+
+        .skeleton {
+            background: linear-gradient(90deg, #e8e8e8 25%, #f5f5f5 50%, #e8e8e8 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+        }
+
+        .dark .skeleton {
+            background: linear-gradient(90deg, #1c1c1e 25%, #2c2c2e 50%, #1c1c1e 75%);
+            background-size: 200% 100%;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.3s ease forwards;
+        }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            height: 4px;
+            border-radius: 2px;
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #007aff;
             cursor: pointer;
-            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
 
-        .photo-card:hover {
-            transform: scale(1.05);
-            z-index: 10;
-        }
-
-        .photo-card img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .download-btn {
-            position: absolute;
-            top: 8px;
-            right: 8px;
-            background: rgba(0, 0, 0, 0.7);
+        input[type="range"]::-moz-range-thumb {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #007aff;
+            cursor: pointer;
             border: none;
-            border-radius: 4px;
-            padding: 8px;
-            cursor: pointer;
-            opacity: 0;
-            transition: opacity 0.2s, background 0.2s;
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .photo-card:hover .download-btn {
-            opacity: 1;
-        }
-
-        .download-btn:hover {
-            background: rgba(0, 0, 0, 0.9);
-        }
-
-        .grid-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 16px;
-            padding: 16px;
-        }
-
-        @media (min-width: 640px) {
-            .grid-container {
-                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            }
-        }
-
-        .pulse {
-            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% {
-                opacity: 1;
-            }
-            50% {
-                opacity: .5;
-            }
-        }
-
-        .slide-in {
-            animation: slideIn 0.5s ease-out forwards;
-            opacity: 0;
-        }
-
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes spin {
-            from {
-                transform: rotate(0deg);
-            }
-            to {
-                transform: rotate(360deg);
-            }
-        }
-
-        .spin {
-            animation: spin 1s linear infinite;
         }
     </style>
 </head>
-<body>
+<body class="light">
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState } = React;
+        const { useState, useEffect } = React;
 
-        // Lucide React icons as inline SVG components
-        const Camera = ({ size = 24, strokeWidth = 2, className = "" }) => (
-            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className}>
-                <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"></path>
-                <circle cx="12" cy="13" r="3"></circle>
+        // Icons
+        const Sun = ({ size = 24 }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="5"/>
+                <line x1="12" y1="1" x2="12" y2="3"/>
+                <line x1="12" y1="21" x2="12" y2="23"/>
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+                <line x1="1" y1="12" x2="3" y2="12"/>
+                <line x1="21" y1="12" x2="23" y2="12"/>
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
             </svg>
         );
 
-        const Download = ({ size = 24, strokeWidth = 2, className = "" }) => (
-            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className}>
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                <polyline points="7 10 12 15 17 10"></polyline>
-                <line x1="12" y1="15" x2="12" y2="3"></line>
+        const Moon = ({ size = 24 }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
             </svg>
         );
 
-        const Loader2 = ({ size = 24, strokeWidth = 2, className = "" }) => (
-            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={`spin ${className}`}>
-                <path d="M21 12a9 9 0 1 1-6.219-8.56"></path>
+        const Plus = ({ size = 24 }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"/>
+                <line x1="5" y1="12" x2="19" y2="12"/>
             </svg>
         );
 
-        const AlertCircle = ({ size = 24, strokeWidth = 2, className = "" }) => (
-            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className}>
-                <circle cx="12" cy="12" r="10"></circle>
-                <line x1="12" y1="8" x2="12" y2="12"></line>
-                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        const Minus = ({ size = 24 }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+        );
+
+        const ArrowLeft = ({ size = 24 }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="19" y1="12" x2="5" y2="12"/>
+                <polyline points="12 19 5 12 12 5"/>
+            </svg>
+        );
+
+        const Download = ({ size = 24 }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+        );
+
+        const Play = ({ size = 24 }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                <polygon points="5 3 19 12 5 21 5 3"/>
             </svg>
         );
 
@@ -169,16 +163,22 @@
             const [albumUrl, setAlbumUrl] = useState('');
             const [loading, setLoading] = useState(false);
             const [photos, setPhotos] = useState([]);
+            const [loadedPhotos, setLoadedPhotos] = useState({});
             const [error, setError] = useState('');
             const [albumInfo, setAlbumInfo] = useState(null);
+            const [showLanding, setShowLanding] = useState(true);
+            const [darkMode, setDarkMode] = useState(false);
+            const [columns, setColumns] = useState(6);
+            const [selectedPhoto, setSelectedPhoto] = useState(null);
 
-            // Get API URL - use relative path if on same domain, or env variable if available
+            useEffect(() => {
+                document.body.className = darkMode ? 'dark' : 'light';
+            }, [darkMode]);
+
             const getApiUrl = () => {
-                // If running locally or on same domain, use relative path
                 if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
                     return 'http://localhost:3001';
                 }
-                // Otherwise use the same origin
                 return '';
             };
 
@@ -188,9 +188,11 @@
             };
 
             const fetchAlbumData = async (url) => {
+                setShowLanding(false);
                 setLoading(true);
                 setError('');
                 setPhotos([]);
+                setLoadedPhotos({});
                 setAlbumInfo(null);
 
                 try {
@@ -202,9 +204,7 @@
                     const apiUrl = getApiUrl();
                     const response = await fetch(`${apiUrl}/api/album/${token}`, {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        }
+                        headers: { 'Content-Type': 'application/json' }
                     });
 
                     if (!response.ok) {
@@ -212,9 +212,6 @@
                     }
 
                     const data = await response.json();
-                    console.log('Album data:', data);
-                    console.log('Sample photo derivatives:', data.photos?.[0]?.derivatives);
-                    console.log('Asset URLs sample:', Object.entries(data.assetUrls || {}).slice(0, 2));
                     
                     if (data.photos && data.photos.length > 0) {
                         setAlbumInfo({
@@ -224,8 +221,6 @@
 
                         const photoList = data.photos.map(photo => {
                             const derivatives = photo.derivatives || {};
-                            
-                            // Sort derivatives by width to get smallest for thumbnail, largest for full
                             const sortedKeys = Object.keys(derivatives).sort((a, b) => {
                                 const aWidth = parseInt(derivatives[a].width) || 0;
                                 const bWidth = parseInt(derivatives[b].width) || 0;
@@ -235,17 +230,15 @@
                             let thumbnailUrl = null;
                             let fullUrl = null;
                             
-                            // For videos, prefer PosterFrame for thumbnail
                             if (photo.mediaAssetType === 'video' && derivatives['PosterFrame']?.url) {
                                 thumbnailUrl = derivatives['PosterFrame'].url;
                             }
                             
-                            // Find URLs from sorted derivatives
                             for (const key of sortedKeys) {
                                 const d = derivatives[key];
                                 if (d.url) {
                                     if (!thumbnailUrl) thumbnailUrl = d.url;
-                                    fullUrl = d.url; // Keep updating to get largest
+                                    fullUrl = d.url;
                                 }
                             }
 
@@ -255,19 +248,19 @@
                                 fullUrl: fullUrl,
                                 caption: photo.caption || '',
                                 dateCreated: photo.dateCreated,
-                                isVideo: photo.mediaAssetType === 'video'
+                                isVideo: photo.mediaAssetType === 'video',
+                                width: parseInt(photo.width) || 1,
+                                height: parseInt(photo.height) || 1
                             };
                         }).filter(p => p.thumbnail);
-                        
-                        console.log('Processed photos:', photoList.length);
-                        console.log('Sample processed photo:', photoList[0]);
 
                         setPhotos(photoList);
                     } else {
                         throw new Error('No photos found in this album');
                     }
                 } catch (err) {
-                    setError(err.message || 'Failed to load album. Please check the URL and try again.');
+                    setError(err.message || 'Failed to load album');
+                    setShowLanding(true);
                 } finally {
                     setLoading(false);
                 }
@@ -280,10 +273,14 @@
                 }
             };
 
-            const downloadImage = async (photo) => {
+            const handleImageLoad = (photoId) => {
+                setLoadedPhotos(prev => ({ ...prev, [photoId]: true }));
+            };
+
+            const downloadImage = async (photo, e) => {
+                e?.stopPropagation();
                 try {
                     const downloadUrl = photo.fullUrl || photo.thumbnail;
-                    console.log('Downloading:', downloadUrl);
                     const response = await fetch(downloadUrl);
                     const blob = await response.blob();
                     const url = window.URL.createObjectURL(blob);
@@ -299,170 +296,375 @@
                 }
             };
 
-            return (
-                <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #0f172a 0%, #581c87 50%, #0f172a 100%)' }}>
-                    <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '3rem 1rem' }}>
-                        {/* Header */}
-                        <div style={{ textAlign: 'center', marginBottom: '3rem' }} className="slide-in">
-                            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '12px', marginBottom: '1rem' }}>
-                                <Camera size={48} strokeWidth={1.5} style={{ color: '#a855f7' }} />
-                            </div>
-                            <h1 style={{ 
-                                fontFamily: "'Archivo Black', sans-serif",
-                                fontSize: 'clamp(2rem, 5vw, 4rem)',
-                                color: 'white',
-                                marginBottom: '1rem',
-                                letterSpacing: '-0.02em',
-                                textShadow: '0 0 40px rgba(168, 85, 247, 0.4)'
-                            }}>
-                                iCLOUD ALBUM VIEWER
-                            </h1>
-                            <p style={{
-                                fontFamily: "'Space Mono', monospace",
-                                color: 'rgba(255, 255, 255, 0.7)',
-                                fontSize: 'clamp(0.875rem, 2vw, 1.125rem)',
-                                maxWidth: '600px',
-                                margin: '0 auto'
-                            }}>
-                                Paste your shared iCloud album URL to browse and download photos
-                            </p>
-                        </div>
+            const styles = {
+                container: {
+                    minHeight: '100vh',
+                    display: 'flex',
+                    flexDirection: 'column'
+                },
+                landing: {
+                    flex: 1,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '2rem',
+                    transition: 'opacity 0.4s ease, transform 0.4s ease'
+                },
+                title: {
+                    fontSize: '2rem',
+                    fontWeight: 600,
+                    marginBottom: '0.5rem',
+                    letterSpacing: '-0.02em'
+                },
+                subtitle: {
+                    fontSize: '1rem',
+                    opacity: 0.6,
+                    marginBottom: '2.5rem',
+                    textAlign: 'center'
+                },
+                form: {
+                    width: '100%',
+                    maxWidth: '480px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '12px'
+                },
+                input: {
+                    padding: '14px 18px',
+                    fontSize: '16px',
+                    border: `1px solid ${darkMode ? '#333' : '#d2d2d7'}`,
+                    borderRadius: '12px',
+                    background: darkMode ? '#1c1c1e' : '#fff',
+                    color: darkMode ? '#f5f5f7' : '#1d1d1f',
+                    outline: 'none',
+                    transition: 'border-color 0.2s, box-shadow 0.2s'
+                },
+                button: {
+                    padding: '14px 24px',
+                    fontSize: '16px',
+                    fontWeight: 500,
+                    border: 'none',
+                    borderRadius: '12px',
+                    background: '#007aff',
+                    color: '#fff',
+                    cursor: 'pointer',
+                    transition: 'opacity 0.2s, transform 0.1s'
+                },
+                header: {
+                    position: 'sticky',
+                    top: 0,
+                    zIndex: 100,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '16px 20px',
+                    background: darkMode ? 'rgba(0,0,0,0.8)' : 'rgba(255,255,255,0.8)',
+                    backdropFilter: 'blur(20px)',
+                    WebkitBackdropFilter: 'blur(20px)',
+                    borderBottom: `1px solid ${darkMode ? '#333' : '#e5e5e5'}`
+                },
+                headerLeft: {
+                    display: 'flex',
+                    flexDirection: 'column'
+                },
+                albumTitle: {
+                    fontSize: '24px',
+                    fontWeight: 600,
+                    letterSpacing: '-0.01em'
+                },
+                photoCount: {
+                    fontSize: '13px',
+                    opacity: 0.6
+                },
+                themeToggle: {
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    padding: '8px',
+                    borderRadius: '8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: darkMode ? '#f5f5f7' : '#1d1d1f',
+                    transition: 'background 0.2s'
+                },
+                grid: {
+                    display: 'grid',
+                    gridTemplateColumns: `repeat(${columns}, 1fr)`,
+                    gap: '4px',
+                    padding: '4px'
+                },
+                photoCard: {
+                    position: 'relative',
+                    aspectRatio: '1',
+                    overflow: 'hidden',
+                    cursor: 'pointer',
+                    background: darkMode ? '#1c1c1e' : '#f5f5f7'
+                },
+                photoImage: {
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                    transition: 'transform 0.3s ease'
+                },
+                videoIndicator: {
+                    position: 'absolute',
+                    top: '50%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    background: 'rgba(0,0,0,0.5)',
+                    borderRadius: '50%',
+                    width: '40px',
+                    height: '40px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#fff'
+                },
+                zoomControls: {
+                    position: 'fixed',
+                    bottom: '20px',
+                    right: '20px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    background: darkMode ? 'rgba(28,28,30,0.9)' : 'rgba(255,255,255,0.9)',
+                    backdropFilter: 'blur(20px)',
+                    WebkitBackdropFilter: 'blur(20px)',
+                    padding: '8px 12px',
+                    borderRadius: '12px',
+                    boxShadow: '0 2px 20px rgba(0,0,0,0.15)',
+                    border: `1px solid ${darkMode ? '#333' : '#e5e5e5'}`
+                },
+                zoomButton: {
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    padding: '4px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: darkMode ? '#f5f5f7' : '#1d1d1f',
+                    opacity: 0.8
+                },
+                slider: {
+                    width: '80px',
+                    background: darkMode ? '#444' : '#d2d2d7'
+                },
+                overlay: {
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    background: darkMode ? 'rgba(0,0,0,0.95)' : 'rgba(255,255,255,0.95)',
+                    zIndex: 1000,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                },
+                overlayHeader: {
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '16px 20px',
+                    background: 'transparent'
+                },
+                backButton: {
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    padding: '8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    color: '#007aff',
+                    fontSize: '17px'
+                },
+                downloadButton: {
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    padding: '8px',
+                    color: '#007aff'
+                },
+                overlayImage: {
+                    maxWidth: '90vw',
+                    maxHeight: '85vh',
+                    objectFit: 'contain'
+                },
+                error: {
+                    color: '#ff3b30',
+                    marginTop: '1rem',
+                    fontSize: '14px'
+                }
+            };
 
-                        {/* Input Form */}
-                        <form onSubmit={handleSubmit} style={{ marginBottom: '3rem', maxWidth: '768px', margin: '0 auto 3rem' }} className="slide-in">
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            // Skeleton grid for loading
+            const SkeletonGrid = () => (
+                <div style={styles.grid}>
+                    {Array.from({ length: columns * 4 }).map((_, i) => (
+                        <div key={i} style={styles.photoCard} className="skeleton" />
+                    ))}
+                </div>
+            );
+
+            return (
+                <div style={styles.container}>
+                    {/* Landing Page */}
+                    {showLanding && (
+                        <div style={styles.landing} className={showLanding ? '' : 'fade-out'}>
+                            <h1 style={styles.title}>iCloud Album Viewer</h1>
+                            <p style={styles.subtitle}>
+                                Paste a shared iCloud album link to view photos
+                            </p>
+                            <form onSubmit={handleSubmit} style={styles.form}>
                                 <input
                                     type="text"
                                     value={albumUrl}
                                     onChange={(e) => setAlbumUrl(e.target.value)}
                                     placeholder="https://www.icloud.com/sharedalbum/#..."
-                                    style={{
-                                        padding: '16px 20px',
-                                        background: 'rgba(15, 23, 42, 0.8)',
-                                        border: '2px solid rgba(168, 85, 247, 0.3)',
-                                        borderRadius: '8px',
-                                        color: 'white',
-                                        fontFamily: "'Space Mono', monospace",
-                                        fontSize: '14px',
-                                        outline: 'none',
-                                        transition: 'border-color 0.3s, box-shadow 0.3s',
-                                        width: '100%'
-                                    }}
+                                    style={styles.input}
                                 />
-                                <button
-                                    type="submit"
-                                    disabled={loading || !albumUrl.trim()}
+                                <button 
+                                    type="submit" 
                                     style={{
-                                        padding: '16px 32px',
-                                        background: loading ? 'rgba(100, 116, 139, 0.8)' : 'linear-gradient(135deg, #a855f7 0%, #7c3aed 100%)',
-                                        border: 'none',
-                                        borderRadius: '8px',
-                                        color: 'white',
-                                        fontFamily: "'Space Mono', monospace",
-                                        fontSize: '14px',
-                                        fontWeight: 'bold',
-                                        cursor: loading || !albumUrl.trim() ? 'not-allowed' : 'pointer',
-                                        transition: 'transform 0.2s, box-shadow 0.2s',
-                                        textTransform: 'uppercase',
-                                        letterSpacing: '0.05em',
-                                        boxShadow: '0 4px 20px rgba(168, 85, 247, 0.3)',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        gap: '8px'
+                                        ...styles.button,
+                                        opacity: albumUrl.trim() ? 1 : 0.5,
+                                        cursor: albumUrl.trim() ? 'pointer' : 'not-allowed'
                                     }}
+                                    disabled={!albumUrl.trim()}
                                 >
-                                    {loading ? (
-                                        <>
-                                            <Loader2 size={16} className="pulse" />
-                                            <span>Loading</span>
-                                        </>
-                                    ) : (
-                                        'Load Album'
-                                    )}
+                                    View Album
+                                </button>
+                            </form>
+                            {error && <p style={styles.error}>{error}</p>}
+                        </div>
+                    )}
+
+                    {/* Album View */}
+                    {!showLanding && (
+                        <>
+                            {/* Sticky Header */}
+                            <header style={styles.header}>
+                                <div style={styles.headerLeft}>
+                                    <span style={styles.albumTitle}>
+                                        {albumInfo?.name || 'Loading...'}
+                                    </span>
+                                    <span style={styles.photoCount}>
+                                        {albumInfo ? `${albumInfo.photoCount} photos` : ''}
+                                    </span>
+                                </div>
+                                <button 
+                                    style={styles.themeToggle}
+                                    onClick={() => setDarkMode(!darkMode)}
+                                    title={darkMode ? 'Light mode' : 'Dark mode'}
+                                >
+                                    {darkMode ? <Sun size={20} /> : <Moon size={20} />}
+                                </button>
+                            </header>
+
+                            {/* Photo Grid or Skeleton */}
+                            {loading ? (
+                                <SkeletonGrid />
+                            ) : (
+                                <div style={styles.grid}>
+                                    {photos.map((photo) => (
+                                        <div 
+                                            key={photo.id}
+                                            style={styles.photoCard}
+                                            onClick={() => setSelectedPhoto(photo)}
+                                        >
+                                            {!loadedPhotos[photo.id] && (
+                                                <div 
+                                                    className="skeleton" 
+                                                    style={{ 
+                                                        position: 'absolute', 
+                                                        inset: 0 
+                                                    }} 
+                                                />
+                                            )}
+                                            <img
+                                                src={photo.thumbnail}
+                                                alt={photo.caption || ''}
+                                                style={{
+                                                    ...styles.photoImage,
+                                                    opacity: loadedPhotos[photo.id] ? 1 : 0
+                                                }}
+                                                onLoad={() => handleImageLoad(photo.id)}
+                                            />
+                                            {photo.isVideo && loadedPhotos[photo.id] && (
+                                                <div style={styles.videoIndicator}>
+                                                    <Play size={16} />
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+
+                            {/* Zoom Controls */}
+                            {!loading && photos.length > 0 && (
+                                <div style={styles.zoomControls}>
+                                    <button 
+                                        style={styles.zoomButton}
+                                        onClick={() => setColumns(c => Math.min(c + 1, 20))}
+                                        title="Smaller"
+                                    >
+                                        <Minus size={18} />
+                                    </button>
+                                    <input
+                                        type="range"
+                                        min="2"
+                                        max="20"
+                                        value={22 - columns}
+                                        onChange={(e) => setColumns(22 - parseInt(e.target.value))}
+                                        style={styles.slider}
+                                    />
+                                    <button 
+                                        style={styles.zoomButton}
+                                        onClick={() => setColumns(c => Math.max(c - 1, 2))}
+                                        title="Larger"
+                                    >
+                                        <Plus size={18} />
+                                    </button>
+                                </div>
+                            )}
+                        </>
+                    )}
+
+                    {/* Full Image Overlay */}
+                    {selectedPhoto && (
+                        <div style={styles.overlay} className="fade-in">
+                            <div style={styles.overlayHeader}>
+                                <button 
+                                    style={styles.backButton}
+                                    onClick={() => setSelectedPhoto(null)}
+                                >
+                                    <ArrowLeft size={20} />
+                                    <span>Back</span>
+                                </button>
+                                <button
+                                    style={styles.downloadButton}
+                                    onClick={(e) => downloadImage(selectedPhoto, e)}
+                                    title="Download"
+                                >
+                                    <Download size={22} />
                                 </button>
                             </div>
-                        </form>
-
-                        {/* Error Message */}
-                        {error && (
-                            <div style={{
-                                maxWidth: '600px',
-                                margin: '0 auto 2rem',
-                                padding: '16px 20px',
-                                background: 'rgba(239, 68, 68, 0.1)',
-                                border: '2px solid rgba(239, 68, 68, 0.3)',
-                                borderRadius: '8px',
-                                color: '#fca5a5',
-                                fontFamily: "'Space Mono', monospace",
-                                fontSize: '14px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '12px'
-                            }}>
-                                <AlertCircle size={20} />
-                                {error}
-                            </div>
-                        )}
-
-                        {/* Album Info */}
-                        {albumInfo && (
-                            <div style={{ textAlign: 'center', marginBottom: '2rem' }} className="slide-in">
-                                <h2 style={{
-                                    fontFamily: "'Archivo Black', sans-serif",
-                                    color: 'white',
-                                    fontSize: 'clamp(1.5rem, 3vw, 2rem)',
-                                    marginBottom: '0.5rem',
-                                    letterSpacing: '-0.01em'
-                                }}>
-                                    {albumInfo.name}
-                                </h2>
-                                <p style={{
-                                    fontFamily: "'Space Mono', monospace",
-                                    color: 'rgba(255, 255, 255, 0.6)',
-                                    fontSize: '14px'
-                                }}>
-                                    {albumInfo.photoCount} {albumInfo.photoCount === 1 ? 'photo' : 'photos'}
-                                </p>
-                            </div>
-                        )}
-
-                        {/* Photo Grid */}
-                        {photos.length > 0 && (
-                            <div className="grid-container">
-                                {photos.map((photo, index) => (
-                                    <div 
-                                        key={photo.id} 
-                                        className="photo-card slide-in"
-                                        style={{ animationDelay: `${0.3 + (index * 0.03)}s` }}
-                                    >
-                                        <img src={photo.thumbnail} alt={photo.caption || `Photo ${index + 1}`} />
-                                        <button
-                                            className="download-btn"
-                                            onClick={() => downloadImage(photo)}
-                                            title="Download photo"
-                                        >
-                                            <Download size={16} />
-                                        </button>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-
-                        {/* Loading State */}
-                        {loading && (
-                            <div style={{ textAlign: 'center', padding: '5rem 0' }}>
-                                <Loader2 size={48} style={{ color: '#a855f7', margin: '0 auto 1rem' }} className="pulse" />
-                                <p style={{
-                                    fontFamily: "'Space Mono', monospace",
-                                    color: 'rgba(255, 255, 255, 0.6)',
-                                    fontSize: '14px'
-                                }}>
-                                    Loading album...
-                                </p>
-                            </div>
-                        )}
-                    </div>
+                            <img
+                                src={selectedPhoto.fullUrl || selectedPhoto.thumbnail}
+                                alt={selectedPhoto.caption || ''}
+                                style={styles.overlayImage}
+                            />
+                        </div>
+                    )}
                 </div>
             );
         };

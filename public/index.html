@@ -221,6 +221,33 @@
             const [sortOrder, setSortOrder] = useState('newest');
             const [videoDurations, setVideoDurations] = useState({});
 
+            // Calculate grid padding based on approximate square size
+            const getGridPadding = () => {
+                // Estimate square size: viewport width / columns
+                const approxSquareSize = (typeof window !== 'undefined' ? window.innerWidth : 1200) / columns;
+                
+                if (approxSquareSize < 32) return '1px';
+                if (approxSquareSize < 72) return '2px';
+                return '4px';
+            };
+
+            const [gridPadding, setGridPadding] = useState(getGridPadding());
+
+            // Update grid padding when columns change
+            useEffect(() => {
+                setGridPadding(getGridPadding());
+            }, [columns]);
+
+            // Update grid padding on window resize
+            useEffect(() => {
+                const handleResize = () => {
+                    setGridPadding(getGridPadding());
+                };
+                
+                window.addEventListener('resize', handleResize);
+                return () => window.removeEventListener('resize', handleResize);
+            }, [columns]);
+
             // Format duration in mm:ss
             const formatDuration = (seconds) => {
                 if (!seconds) return null;
@@ -556,8 +583,8 @@
                 grid: {
                     display: 'grid',
                     gridTemplateColumns: `repeat(${columns}, 1fr)`,
-                    gap: '4px',
-                    padding: '4px'
+                    gap: gridPadding,
+                    padding: gridPadding
                 },
                 photoCard: {
                     position: 'relative',

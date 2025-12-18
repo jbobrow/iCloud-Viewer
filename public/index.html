@@ -413,18 +413,22 @@
                 e?.stopPropagation();
                 try {
                     // Use videoUrl for videos, fullUrl for images
-                    const downloadUrl = photo.isVideo 
+                    const mediaUrl = photo.isVideo 
                         ? (photo.videoUrl || photo.fullUrl) 
                         : (photo.fullUrl || photo.thumbnail);
-                    const response = await fetch(downloadUrl);
-                    const blob = await response.blob();
-                    const url = window.URL.createObjectURL(blob);
+                    
+                    const filename = `${photo.isVideo ? 'video' : 'photo'}-${photo.id}.${photo.isVideo ? 'mp4' : 'jpg'}`;
+                    
+                    // Use server proxy to bypass CORS
+                    const apiUrl = getApiUrl();
+                    const proxyUrl = `${apiUrl}/api/download?url=${encodeURIComponent(mediaUrl)}&filename=${encodeURIComponent(filename)}`;
+                    
+                    // Create a link and trigger download
                     const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `${photo.isVideo ? 'video' : 'photo'}-${photo.id}.${photo.isVideo ? 'mp4' : 'jpg'}`;
+                    a.href = proxyUrl;
+                    a.download = filename;
                     document.body.appendChild(a);
                     a.click();
-                    window.URL.revokeObjectURL(url);
                     document.body.removeChild(a);
                 } catch (err) {
                     console.error('Download failed:', err);

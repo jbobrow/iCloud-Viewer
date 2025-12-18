@@ -171,6 +171,45 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+// Proxy endpoint for downloading media (bypasses CORS)
+app.get('/api/download', async (req, res) => {
+  const { url, filename } = req.query;
+  
+  if (!url) {
+    return res.status(400).json({ error: 'URL required' });
+  }
+
+  try {
+    console.log(`[Download] Proxying: ${url.substring(0, 80)}...`);
+    
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch: ${response.status}`);
+    }
+
+    // Forward content type
+    const contentType = response.headers.get('content-type');
+    if (contentType) {
+      res.setHeader('Content-Type', contentType);
+    }
+
+    // Set download filename
+    const downloadName = filename || 'download';
+    res.setHeader('Content-Disposition', `attachment; filename="${downloadName}"`);
+
+    // Pipe the response
+    response.body.pipe(res);
+  } catch (error) {
+    console.error(`[Download] Error: ${error.message}`);
+    res.status(500).json({ error: 'Download failed', message: error.message });
+  }
+});
+
 app.all('/api/*', (req, res) => {
   res.status(404).json({ error: 'Not found' });
 });

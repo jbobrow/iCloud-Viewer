@@ -66,6 +66,72 @@
             to { opacity: 1; }
         }
 
+        @keyframes swipeOutLeft {
+            0% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1;
+            }
+            70% {
+                opacity: 1;
+            }
+            100% {
+                transform: translate(calc(-50% - 100vw), -50%) scale(0.9);
+                opacity: 0;
+            }
+        }
+
+        @keyframes swipeOutRight {
+            0% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1;
+            }
+            70% {
+                opacity: 1;
+            }
+            100% {
+                transform: translate(calc(-50% + 100vw), -50%) scale(0.9);
+                opacity: 0;
+            }
+        }
+
+        @keyframes swipeInFromRight {
+            0% {
+                transform: translate(calc(-50% + 100vw), -50%) scale(0.9);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1;
+            }
+        }
+
+        @keyframes swipeInFromLeft {
+            0% {
+                transform: translate(calc(-50% - 100vw), -50%) scale(0.9);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1;
+            }
+        }
+
+        .swipe-out-left {
+            animation: swipeOutLeft 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+        }
+
+        .swipe-out-right {
+            animation: swipeOutRight 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+        }
+
+        .swipe-in-from-right {
+            animation: swipeInFromRight 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+        }
+
+        .swipe-in-from-left {
+            animation: swipeInFromLeft 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+        }
+
         .fade-in {
             animation: fadeIn 0.3s ease forwards;
         }
@@ -94,6 +160,81 @@
         @keyframes dotFade {
             0%, 100% { opacity: 0.2; }
             50% { opacity: 1; }
+        }
+
+        @keyframes dotPulse {
+            0%, 100% { opacity: 0.2; }
+            50% { opacity: 1; }
+        }
+
+        .loading-spinner {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 48px;
+            height: 48px;
+            position: relative;
+        }
+
+        .loading-spinner span {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: currentColor;
+            animation: dotPulse 1.6s ease-in-out infinite;
+        }
+
+        .loading-spinner span:nth-child(1) {
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            animation-delay: 0s;
+        }
+
+        .loading-spinner span:nth-child(2) {
+            top: 6px;
+            right: 6px;
+            animation-delay: 0.2s;
+        }
+
+        .loading-spinner span:nth-child(3) {
+            top: 50%;
+            right: 0;
+            transform: translateY(-50%);
+            animation-delay: 0.4s;
+        }
+
+        .loading-spinner span:nth-child(4) {
+            bottom: 6px;
+            right: 6px;
+            animation-delay: 0.6s;
+        }
+
+        .loading-spinner span:nth-child(5) {
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            animation-delay: 0.8s;
+        }
+
+        .loading-spinner span:nth-child(6) {
+            bottom: 6px;
+            left: 6px;
+            animation-delay: 1s;
+        }
+
+        .loading-spinner span:nth-child(7) {
+            top: 50%;
+            left: 0;
+            transform: translateY(-50%);
+            animation-delay: 1.2s;
+        }
+
+        .loading-spinner span:nth-child(8) {
+            top: 6px;
+            left: 6px;
+            animation-delay: 1.4s;
         }
 
         input[type="range"] {
@@ -128,7 +269,7 @@
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect } = React;
+        const { useState, useEffect, useRef } = React;
 
         // Icons
         const Sun = ({ size = 24 }) => (
@@ -207,6 +348,12 @@
             </svg>
         );
 
+        const Loader = ({ size = 24 }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+            </svg>
+        );
+
         const ICloudAlbumViewer = () => {
             const [albumUrl, setAlbumUrl] = useState('');
             const [loading, setLoading] = useState(false);
@@ -238,6 +385,11 @@
 
             const [gridPadding, setGridPadding] = useState(getGridPadding());
             const [squareSize, setSquareSize] = useState(getSquareSize());
+            const [swipeDirection, setSwipeDirection] = useState(null); // 'left' or 'right'
+            const [isAnimating, setIsAnimating] = useState(false);
+            const [previousPhoto, setPreviousPhoto] = useState(null);
+            const [overlayLoadedPhotos, setOverlayLoadedPhotos] = useState({});
+            const videoRef = useRef(null);
 
             // Update grid padding and square size when columns change
             useEffect(() => {
@@ -316,12 +468,34 @@
                 if (!selectedPhoto) return;
 
                 const handleKeyDown = (e) => {
+                    if (isAnimating) return; // Prevent navigation during animation
+                    
                     const currentIndex = sortedPhotos.findIndex(p => p.id === selectedPhoto.id);
                     
                     if (e.key === 'ArrowLeft' && currentIndex > 0) {
-                        setSelectedPhoto(sortedPhotos[currentIndex - 1]);
+                        setIsAnimating(true);
+                        setSwipeDirection('right'); // Left arrow = previous = swipe right
+                        setPreviousPhoto(selectedPhoto);
+                        setTimeout(() => {
+                            setSelectedPhoto(sortedPhotos[currentIndex - 1]);
+                            setTimeout(() => {
+                                setSwipeDirection(null);
+                                setPreviousPhoto(null);
+                                setIsAnimating(false);
+                            }, 400); // Match animation duration
+                        }, 50);
                     } else if (e.key === 'ArrowRight' && currentIndex < sortedPhotos.length - 1) {
-                        setSelectedPhoto(sortedPhotos[currentIndex + 1]);
+                        setIsAnimating(true);
+                        setSwipeDirection('left'); // Right arrow = next = swipe left
+                        setPreviousPhoto(selectedPhoto);
+                        setTimeout(() => {
+                            setSelectedPhoto(sortedPhotos[currentIndex + 1]);
+                            setTimeout(() => {
+                                setSwipeDirection(null);
+                                setPreviousPhoto(null);
+                                setIsAnimating(false);
+                            }, 400); // Match animation duration
+                        }, 50);
                     } else if (e.key === 'Escape') {
                         setSelectedPhoto(null);
                     }
@@ -329,7 +503,7 @@
 
                 window.addEventListener('keydown', handleKeyDown);
                 return () => window.removeEventListener('keydown', handleKeyDown);
-            }, [selectedPhoto, sortedPhotos]);
+            }, [selectedPhoto, sortedPhotos, isAnimating]);
 
             // Touch swipe navigation for overlay
             useEffect(() => {
@@ -349,16 +523,38 @@
                 };
 
                 const handleSwipe = () => {
+                    if (isAnimating) return; // Prevent swipe during animation
+                    
                     const swipeDistance = touchStartX - touchEndX;
                     const currentIndex = sortedPhotos.findIndex(p => p.id === selectedPhoto.id);
 
                     // Swipe left (next photo)
                     if (swipeDistance > minSwipeDistance && currentIndex < sortedPhotos.length - 1) {
-                        setSelectedPhoto(sortedPhotos[currentIndex + 1]);
+                        setIsAnimating(true);
+                        setSwipeDirection('left');
+                        setPreviousPhoto(selectedPhoto);
+                        setTimeout(() => {
+                            setSelectedPhoto(sortedPhotos[currentIndex + 1]);
+                            setTimeout(() => {
+                                setSwipeDirection(null);
+                                setPreviousPhoto(null);
+                                setIsAnimating(false);
+                            }, 400); // Match animation duration
+                        }, 50);
                     }
                     // Swipe right (previous photo)
                     else if (swipeDistance < -minSwipeDistance && currentIndex > 0) {
-                        setSelectedPhoto(sortedPhotos[currentIndex - 1]);
+                        setIsAnimating(true);
+                        setSwipeDirection('right');
+                        setPreviousPhoto(selectedPhoto);
+                        setTimeout(() => {
+                            setSelectedPhoto(sortedPhotos[currentIndex - 1]);
+                            setTimeout(() => {
+                                setSwipeDirection(null);
+                                setPreviousPhoto(null);
+                                setIsAnimating(false);
+                            }, 400); // Match animation duration
+                        }, 50);
                     }
                 };
 
@@ -369,13 +565,58 @@
                     window.removeEventListener('touchstart', handleTouchStart);
                     window.removeEventListener('touchend', handleTouchEnd);
                 };
-            }, [selectedPhoto, sortedPhotos]);
+            }, [selectedPhoto, sortedPhotos, isAnimating]);
+
+            // Autoplay video when loaded and animation completes
+            useEffect(() => {
+                if (selectedPhoto?.isVideo && 
+                    overlayLoadedPhotos[selectedPhoto.id] && 
+                    !swipeDirection && 
+                    videoRef.current) {
+                    videoRef.current.play().catch(err => {
+                        // Autoplay failed (browser policy), user will need to click play
+                        console.log('Autoplay prevented:', err);
+                    });
+                }
+            }, [selectedPhoto, overlayLoadedPhotos, swipeDirection]);
 
             const getApiUrl = () => {
                 if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
                     return 'http://localhost:3001';
                 }
                 return '';
+            };
+
+            const handleOverlayImageLoad = (photoId) => {
+                setOverlayLoadedPhotos(prev => ({ ...prev, [photoId]: true }));
+            };
+
+            // Calculate placeholder dimensions based on photo aspect ratio
+            const getPlaceholderDimensions = (photo) => {
+                if (!photo || !photo.width || !photo.height) {
+                    return { width: '60vw', height: '60vh' };
+                }
+                
+                const aspectRatio = photo.width / photo.height;
+                const maxWidth = window.innerWidth * 0.9;
+                const maxHeight = window.innerHeight * 0.85;
+                
+                let width, height;
+                
+                if (aspectRatio > maxWidth / maxHeight) {
+                    // Width-constrained
+                    width = maxWidth;
+                    height = width / aspectRatio;
+                } else {
+                    // Height-constrained
+                    height = maxHeight;
+                    width = height * aspectRatio;
+                }
+                
+                return {
+                    width: `${width}px`,
+                    height: `${height}px`
+                };
             };
 
             const extractAlbumToken = (url) => {
@@ -762,9 +1003,26 @@
                     color: '#007aff'
                 },
                 overlayImage: {
+                    position: 'absolute',
+                    top: '50%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
                     maxWidth: '90vw',
                     maxHeight: '85vh',
                     objectFit: 'contain'
+                },
+                overlayPlaceholder: {
+                    position: 'absolute',
+                    top: '50%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    background: darkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                },
+                loadingIndicator: {
+                    color: darkMode ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)'
                 },
                 error: {
                     color: '#ff3b30',
@@ -954,19 +1212,119 @@
                                     <Download size={22} />
                                 </button>
                             </div>
+                            
+                            {/* Previous photo - swiping out */}
+                            {previousPhoto && swipeDirection && (
+                                <>
+                                    {!overlayLoadedPhotos[previousPhoto.id] && (
+                                        <div 
+                                            style={{
+                                                ...styles.overlayPlaceholder,
+                                                ...getPlaceholderDimensions(previousPhoto)
+                                            }}
+                                            className={swipeDirection === 'left' ? 'swipe-out-left' : 'swipe-out-right'}
+                                        >
+                                            <div style={styles.loadingIndicator} className="loading-spinner">
+                                                <span></span>
+                                                <span></span>
+                                                <span></span>
+                                                <span></span>
+                                                <span></span>
+                                                <span></span>
+                                                <span></span>
+                                                <span></span>
+                                            </div>
+                                        </div>
+                                    )}
+                                    {previousPhoto.isVideo ? (
+                                        <video
+                                            key={`prev-${previousPhoto.id}`}
+                                            src={previousPhoto.videoUrl || previousPhoto.fullUrl}
+                                            style={{
+                                                ...styles.overlayImage,
+                                                display: overlayLoadedPhotos[previousPhoto.id] ? 'block' : 'none'
+                                            }}
+                                            className={swipeDirection === 'left' ? 'swipe-out-left' : 'swipe-out-right'}
+                                            controls
+                                            playsInline
+                                            onLoadedData={() => handleOverlayImageLoad(previousPhoto.id)}
+                                        />
+                                    ) : (
+                                        <img
+                                            key={`prev-${previousPhoto.id}`}
+                                            src={previousPhoto.fullUrl || previousPhoto.thumbnail}
+                                            alt={previousPhoto.caption || ''}
+                                            style={{
+                                                ...styles.overlayImage,
+                                                opacity: overlayLoadedPhotos[previousPhoto.id] ? 1 : 0
+                                            }}
+                                            className={swipeDirection === 'left' ? 'swipe-out-left' : 'swipe-out-right'}
+                                            onLoad={() => handleOverlayImageLoad(previousPhoto.id)}
+                                        />
+                                    )}
+                                </>
+                            )}
+                            
+                            {/* Current photo - swiping in or static */}
+                            {!overlayLoadedPhotos[selectedPhoto.id] && (
+                                <div 
+                                    style={{
+                                        ...styles.overlayPlaceholder,
+                                        // Use current photo's aspect ratio, or fallback to previous photo's if swiping
+                                        ...getPlaceholderDimensions(
+                                            selectedPhoto.width && selectedPhoto.height 
+                                                ? selectedPhoto 
+                                                : (swipeDirection && previousPhoto ? previousPhoto : selectedPhoto)
+                                        )
+                                    }}
+                                    className={
+                                        swipeDirection === 'left' ? 'swipe-in-from-right' :
+                                        swipeDirection === 'right' ? 'swipe-in-from-left' : ''
+                                    }
+                                >
+                                    <div style={styles.loadingIndicator} className="loading-spinner">
+                                        <span></span>
+                                        <span></span>
+                                        <span></span>
+                                        <span></span>
+                                        <span></span>
+                                        <span></span>
+                                        <span></span>
+                                        <span></span>
+                                    </div>
+                                </div>
+                            )}
                             {selectedPhoto.isVideo ? (
                                 <video
+                                    ref={videoRef}
+                                    key={`current-${selectedPhoto.id}`}
                                     src={selectedPhoto.videoUrl || selectedPhoto.fullUrl}
-                                    style={styles.overlayImage}
+                                    style={{
+                                        ...styles.overlayImage,
+                                        display: overlayLoadedPhotos[selectedPhoto.id] ? 'block' : 'none'
+                                    }}
+                                    className={
+                                        swipeDirection === 'left' ? 'swipe-in-from-right' :
+                                        swipeDirection === 'right' ? 'swipe-in-from-left' : ''
+                                    }
                                     controls
-                                    autoPlay
                                     playsInline
+                                    onLoadedData={() => handleOverlayImageLoad(selectedPhoto.id)}
                                 />
                             ) : (
                                 <img
+                                    key={`current-${selectedPhoto.id}`}
                                     src={selectedPhoto.fullUrl || selectedPhoto.thumbnail}
                                     alt={selectedPhoto.caption || ''}
-                                    style={styles.overlayImage}
+                                    style={{
+                                        ...styles.overlayImage,
+                                        opacity: overlayLoadedPhotos[selectedPhoto.id] ? 1 : 0
+                                    }}
+                                    className={
+                                        swipeDirection === 'left' ? 'swipe-in-from-right' :
+                                        swipeDirection === 'right' ? 'swipe-in-from-left' : ''
+                                    }
+                                    onLoad={() => handleOverlayImageLoad(selectedPhoto.id)}
                                 />
                             )}
                         </div>

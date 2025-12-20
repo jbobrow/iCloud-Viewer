@@ -400,6 +400,14 @@
             </svg>
         );
 
+        const ExternalLink = ({ size = 24 }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                <polyline points="15 3 21 3 21 9"/>
+                <line x1="10" y1="14" x2="21" y2="3"/>
+            </svg>
+        );
+
         const Video = ({ size = 24 }) => (
             <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.87a.5.5 0 0 0-.752-.432L16 10.5"/>
@@ -429,6 +437,7 @@
             const [selectedPhoto, setSelectedPhoto] = useState(null);
             const [sortOrder, setSortOrder] = useState('newest');
             const [videoDurations, setVideoDurations] = useState({});
+            const [copiedUrl, setCopiedUrl] = useState(false);
 
             // Calculate grid padding based on approximate square size
             const getGridPadding = () => {
@@ -724,6 +733,11 @@
             };
 
             const extractAlbumToken = (url) => {
+                // If it's already just a token (no # or /), return it
+                if (/^[A-Za-z0-9]+$/.test(url.trim())) {
+                    return url.trim();
+                }
+                // Otherwise extract from URL with #
                 const match = url.match(/#([A-Za-z0-9]+)/);
                 return match ? match[1] : null;
             };
@@ -738,6 +752,17 @@
                 const token = extractAlbumToken(url);
                 if (token) {
                     window.location.hash = token;
+                }
+            };
+
+            // Copy current URL to clipboard
+            const copyUrlToClipboard = async () => {
+                try {
+                    await navigator.clipboard.writeText(window.location.href);
+                    setCopiedUrl(true);
+                    setTimeout(() => setCopiedUrl(false), 2000);
+                } catch (err) {
+                    console.error('Failed to copy URL:', err);
                 }
             };
 
@@ -1259,7 +1284,7 @@
                         <div style={styles.landing} className={showLanding ? '' : 'fade-out'}>
                             <h1 style={styles.title}>iCloud Album Viewer</h1>
                             <p style={styles.subtitle}>
-                                Paste a shared iCloud album link to view photos
+                                Paste a shared iCloud album link or hash token to view photos and videos
                             </p>
                             <form onSubmit={handleSubmit} style={styles.form}>
                                 <input
@@ -1291,13 +1316,43 @@
                             {/* Sticky Header */}
                             <header style={styles.header}>
                                 <div style={styles.headerLeft}>
-                                    <span style={styles.albumTitle}>
-                                        {loading ? (
-                                            <span>iCloud Album Loading<span className="loading-dots"><span>.</span><span>.</span><span>.</span></span></span>
-                                        ) : (
-                                            albumInfo?.name || 'Shared Album'
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <span style={styles.albumTitle}>
+                                            {loading ? (
+                                                <span>iCloud Album Loading<span className="loading-dots"><span>.</span><span>.</span><span>.</span></span></span>
+                                            ) : (
+                                                albumInfo?.name || 'Shared Album'
+                                            )}
+                                        </span>
+                                        {!loading && albumInfo && (
+                                            <button
+                                                style={{
+                                                    background: 'none',
+                                                    border: 'none',
+                                                    cursor: 'pointer',
+                                                    padding: '4px',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    color: darkMode ? '#f5f5f7' : '#1d1d1f',
+                                                    opacity: 0.8,
+                                                    transition: 'opacity 0.2s'
+                                                }}
+                                                onClick={copyUrlToClipboard}
+                                                title="Copy shareable link"
+                                            >
+                                                <ExternalLink size={18} />
+                                            </button>
                                         )}
-                                    </span>
+                                        {copiedUrl && (
+                                            <span style={{
+                                                fontSize: '14px',
+                                                color: '#007aff',
+                                                fontWeight: 500
+                                            }}>
+                                                Link copied!
+                                            </span>
+                                        )}
+                                    </div>
                                     <span style={styles.photoCount}>
                                         {!loading && albumInfo ? `${albumInfo.photoCount} photos` : ''}
                                     </span>

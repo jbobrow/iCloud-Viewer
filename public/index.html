@@ -818,9 +818,13 @@
                     const data = await response.json();
                     
                     if (data.photos && data.photos.length > 0) {
+                        const videoCount = data.photos.filter(p => p.mediaAssetType === 'video').length;
+                        const photoCount = data.photos.length - videoCount;
                         setAlbumInfo({
                             name: data.streamName || 'Shared Album',
-                            photoCount: data.photos.length
+                            photoCount: photoCount,
+                            videoCount: videoCount,
+                            totalCount: data.photos.length
                         });
 
                         const photoList = data.photos.map(photo => {
@@ -1393,7 +1397,13 @@
                                         )}
                                     </div>
                                     <span style={styles.photoCount}>
-                                        {!loading && albumInfo ? `${albumInfo.photoCount} photos` : ''}
+                                        {!loading && albumInfo ? (
+                                            <>
+                                                {albumInfo.photoCount > 0 && `${albumInfo.photoCount} photo${albumInfo.photoCount !== 1 ? 's' : ''}`}
+                                                {albumInfo.photoCount > 0 && albumInfo.videoCount > 0 && ', '}
+                                                {albumInfo.videoCount > 0 && `${albumInfo.videoCount} video${albumInfo.videoCount !== 1 ? 's' : ''}`}
+                                            </>
+                                        ) : ''}
                                     </span>
                                 </div>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>

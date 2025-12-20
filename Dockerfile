@@ -12,7 +12,7 @@ RUN npm install --production
 
 # Copy application files
 COPY server.js .
-COPY index.html ./public/
+COPY public ./public/
 
 # Expose port (Cloud Run will set PORT env variable)
 ENV PORT=8080

@@ -4,7 +4,7 @@ const fetch = require('node-fetch');
 const path = require('path');
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3001;  // Cloud Run sets PORT env variable
 
 app.use(cors());
 app.use(express.json());
@@ -15,7 +15,8 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(express.static('public'));
+// Serve static files from current directory (Dockerfile copies index.html to public/)
+app.use(express.static(path.join(__dirname, 'public')));
 
 const hostCache = new Map();
 
@@ -214,15 +215,16 @@ app.all('/api/*', (req, res) => {
   res.status(404).json({ error: 'Not found' });
 });
 
+// Serve index.html for all other routes (SPA routing)
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 app.listen(PORT, () => {
   console.log(`
-╔══════════════════════════════════════╗
+╔═══════════════════════════════════════╗
 ║  iCloud Album Viewer                 ║
-║  http://localhost:${PORT}             ║
-╚══════════════════════════════════════╝
+║  Port: ${PORT}                        ║
+╚═══════════════════════════════════════╝
   `);
 });

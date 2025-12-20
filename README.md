@@ -1,52 +1,114 @@
 # iCloud Album Viewer
 
-A web app to view and download photos from shared iCloud albums.
+View and download photos from shared iCloud albums with a beautiful, modern interface.
 
-## Features
+## ✨ Features
 
-- Paste any shared iCloud album URL to browse photos
-- View photo thumbnails in a grid
-- Download individual photos
-- Supports photos and videos
+- 📱 View shared iCloud albums
+- 🖼️ Grid layout with zoom controls
+- 🎥 Video support with playback
+- 📥 Download photos and videos
+- 🌓 Dark/light mode
+- 📅 Sort by date (newest/oldest)
+- 🚀 Fast, serverless deployment
 
-## Deployment
+## 🚀 Deploy to Google Cloud Run
 
-### Deploy to Render (Free)
+[![Run on Google Cloud](https://deploy.cloud.run/button.svg)](https://deploy.cloud.run)
 
-1. Push this repo to GitHub
-2. Go to [render.com](https://render.com) and sign up
-3. Click "New" → "Web Service"
-4. Connect your GitHub repo
-5. Settings:
-   - **Build Command:** `npm install`
-   - **Start Command:** `npm start`
-6. Click "Create Web Service"
+Click the button above to deploy your own instance!
 
-Your app will be live at `https://your-app-name.onrender.com`
+Or follow the manual steps in [GITHUB-DEPLOY.md](GITHUB-DEPLOY.md)
 
-## Local Development
+## 🆓 Completely Free
+
+Runs on Google Cloud Run's generous free tier:
+- 2 million requests/month
+- No cold starts
+- Scales automatically
+- No credit card required
+
+## 🛠️ Local Development
 
 ```bash
+# Install dependencies
 npm install
+
+# Create public directory
+mkdir -p public
+cp index.html public/
+
+# Start the server
 npm start
 ```
 
-Then open http://localhost:3001
+Visit `http://localhost:3001`
 
-## Usage
+## 📖 Usage
 
-1. Get a shared iCloud album URL (looks like `https://www.icloud.com/sharedalbum/#TOKEN`)
-2. Paste the URL into the input field
-3. Click "Load Album"
-4. Browse and download photos!
+1. Get a shared iCloud album link (Settings → Shared Albums → Share Link)
+2. Paste it into the app
+3. View, zoom, and download photos!
 
-## How It Works
+## 🏗️ Tech Stack
 
-The server proxies requests to Apple's iCloud API to:
-1. Fetch album metadata and photo list
-2. Resolve photo URLs from Apple's CDN
-3. Serve the photos to the frontend
+- **Backend:** Node.js + Express
+- **Frontend:** React (vanilla, no build step)
+- **Deployment:** Google Cloud Run
+- **Container:** Docker
 
-## License
+## 📁 Project Structure
 
-MIT
+```
+├── Dockerfile              # Container configuration
+├── cloudbuild.yaml         # Auto-deploy configuration
+├── server.js               # Node.js backend
+├── index.html              # React frontend
+├── package.json            # Dependencies
+└── GITHUB-DEPLOY.md        # Deployment guide
+```
+
+## 🔧 Configuration
+
+The app automatically:
+- Uses Cloud Run's PORT environment variable
+- Scales to zero when idle
+- Handles CORS for iCloud API
+- Proxies downloads to bypass CORS
+
+## 🌍 Custom Domain
+
+After deploying, you can map a custom domain:
+
+1. Go to Cloud Run console
+2. Select your service
+3. Click "Manage Custom Domains"
+4. Follow the DNS setup instructions
+
+## 📊 Monitoring
+
+View your deployment:
+- **Service:** https://console.cloud.google.com/run
+- **Logs:** Cloud Run → Your Service → Logs tab
+- **Metrics:** Cloud Run → Your Service → Metrics tab
+
+## 🤝 Contributing
+
+Contributions welcome! Feel free to:
+- Report bugs
+- Suggest features
+- Submit pull requests
+
+## 📝 License
+
+MIT License - feel free to use for any purpose!
+
+## 🆘 Support
+
+- **Issues:** Open a GitHub issue
+- **Docs:** See [GITHUB-DEPLOY.md](GITHUB-DEPLOY.md)
+- **Cloud Run:** https://cloud.google.com/run/docs
+
+---
+
+Made with ❤️ | Powered by Google Cloud Run

@@ -584,6 +584,37 @@
                 return photos.filter(p => p.isVideo).length;
             }, [photos]);
 
+            // Calculate download counts (respecting contributor filters)
+            const downloadImageCount = React.useMemo(() => {
+                let filtered = photos.filter(p => !p.isVideo);
+                if (selectedContributors.size > 0) {
+                    filtered = filtered.filter(p => 
+                        p.contributorFullName && selectedContributors.has(p.contributorFullName)
+                    );
+                }
+                return filtered.length;
+            }, [photos, selectedContributors]);
+
+            const downloadVideoCount = React.useMemo(() => {
+                let filtered = photos.filter(p => p.isVideo);
+                if (selectedContributors.size > 0) {
+                    filtered = filtered.filter(p => 
+                        p.contributorFullName && selectedContributors.has(p.contributorFullName)
+                    );
+                }
+                return filtered.length;
+            }, [photos, selectedContributors]);
+
+            const downloadAllCount = React.useMemo(() => {
+                let filtered = [...photos];
+                if (selectedContributors.size > 0) {
+                    filtered = filtered.filter(p => 
+                        p.contributorFullName && selectedContributors.has(p.contributorFullName)
+                    );
+                }
+                return filtered.length;
+            }, [photos, selectedContributors]);
+
             useEffect(() => {
                 document.body.className = darkMode ? 'dark' : 'light';
             }, [darkMode]);
@@ -1638,7 +1669,7 @@
                                                     <Camera size={20} />
                                                     <span>
                                                         Download Images{' '}
-                                                        <span style={styles.downloadCount}>({imageCount})</span>
+                                                        <span style={styles.downloadCount}>({downloadImageCount})</span>
                                                     </span>
                                                 </button>
                                                 <button 
@@ -1651,7 +1682,7 @@
                                                     <Video size={20} />
                                                     <span>
                                                         Download Videos{' '}
-                                                        <span style={styles.downloadCount}>({videoCount})</span>
+                                                        <span style={styles.downloadCount}>({downloadVideoCount})</span>
                                                     </span>
                                                 </button>
                                                 <button 
@@ -1664,7 +1695,7 @@
                                                     <Server size={20} />
                                                     <span>
                                                         Download All{' '}
-                                                        <span style={styles.downloadCount}>({sortedPhotos.length})</span>
+                                                        <span style={styles.downloadCount}>({downloadAllCount})</span>
                                                     </span>
                                                 </button>
                                             </div>

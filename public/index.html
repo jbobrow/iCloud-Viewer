@@ -1022,15 +1022,23 @@
                     const zip = new JSZip();
                     const apiUrl = getApiUrl();
                     
-                    // Filter photos based on type
-                    let photosToDownload = [];
-                    if (type === 'images') {
-                        photosToDownload = sortedPhotos.filter(p => !p.isVideo);
-                    } else if (type === 'videos') {
-                        photosToDownload = sortedPhotos.filter(p => p.isVideo);
-                    } else {
-                        photosToDownload = sortedPhotos;
+                    // Start with all photos
+                    let photosToDownload = [...photos];
+                    
+                    // Apply contributor filter if any contributors are selected
+                    if (selectedContributors.size > 0) {
+                        photosToDownload = photosToDownload.filter(p => 
+                            p.contributorFullName && selectedContributors.has(p.contributorFullName)
+                        );
                     }
+                    
+                    // Then filter by media type based on download type
+                    if (type === 'images') {
+                        photosToDownload = photosToDownload.filter(p => !p.isVideo);
+                    } else if (type === 'videos') {
+                        photosToDownload = photosToDownload.filter(p => p.isVideo);
+                    }
+                    // type === 'all' keeps everything (already filtered by contributors)
 
                     // Download each file and add to zip
                     for (let i = 0; i < photosToDownload.length; i++) {

@@ -1,114 +1,76 @@
 # iCloud Album Viewer
 
-View and download photos from shared iCloud albums with a beautiful, modern interface.
+<div align="center">
+  <img src="public/apple-touch-icon.png" alt="iCloud Viewer" width="64" height="64">
+  
+  **View and download photos from shared iCloud albums**
+  
+  ✨ [**Try it live at icloudviewer.com**](https://icloudviewer.com) ✨
+  
+  ![](https://img.shields.io/badge/deployment-Google%20Cloud%20Run-4285F4?logo=google-cloud)
+  ![](https://img.shields.io/badge/license-MIT-blue)
+</div>
 
-## ✨ Features
+---
 
-- 📱 View shared iCloud albums
-- 🖼️ Grid layout with zoom controls
-- 🎥 Video support with playback
-- 📥 Download photos and videos
-- 🌓 Dark/light mode
-- 📅 Sort by date (newest/oldest)
-- 🚀 Fast, serverless deployment
+## Features
 
-## 🚀 Deploy to Google Cloud Run
+- 🖼️ **Beautiful grid layout** with adjustable zoom (2-20 columns)
+- 🎥 **Video support** with inline playback and duration display
+- 🔍 **Advanced filtering** by media type and contributors
+- 📥 **Bulk downloads** for images, videos, or entire albums
+- 🌓 **Dark/light mode** with smooth transitions
+- 📅 **Flexible sorting** by date (newest/oldest first)
+- 🚀 **Zero-install** web app - just paste a link
+
+## Usage
+
+1. Get a shared iCloud album link from Photos app
+2. Paste the link at [icloudviewer.com](https://icloudviewer.com)
+3. View, filter, and download your photos!
+
+## Deploy Your Own
 
 [![Run on Google Cloud](https://deploy.cloud.run/button.svg)](https://deploy.cloud.run)
 
-Click the button above to deploy your own instance!
+Runs completely free on Google Cloud Run's generous free tier (2M requests/month).
 
-Or follow the manual steps in [GITHUB-DEPLOY.md](GITHUB-DEPLOY.md)
-
-## 🆓 Completely Free
-
-Runs on Google Cloud Run's generous free tier:
-- 2 million requests/month
-- No cold starts
-- Scales automatically
-- No credit card required
-
-## 🛠️ Local Development
+### Manual Deployment
 
 ```bash
 # Install dependencies
 npm install
 
-# Create public directory
-mkdir -p public
-cp index.html public/
-
-# Start the server
+# Start local server
 npm start
 ```
 
 Visit `http://localhost:3001`
 
-## 📖 Usage
+## Tech Stack
 
-1. Get a shared iCloud album link (Settings → Shared Albums → Share Link)
-2. Paste it into the app
-3. View, zoom, and download photos!
-
-## 🏗️ Tech Stack
-
-- **Backend:** Node.js + Express
 - **Frontend:** React (vanilla, no build step)
-- **Deployment:** Google Cloud Run
-- **Container:** Docker
+- **Backend:** Node.js + Express
+- **Deployment:** Google Cloud Run + Docker
+- **API:** iCloud Shared Streams API
 
-## 📁 Project Structure
+## Project Structure
 
 ```
-├── Dockerfile              # Container configuration
-├── cloudbuild.yaml         # Auto-deploy configuration
-├── server.js               # Node.js backend
-├── index.html              # React frontend
-├── package.json            # Dependencies
-└── GITHUB-DEPLOY.md        # Deployment guide
+├── public/
+│   └── index.html      # React frontend (single file)
+├── server.js           # Express API server
+├── package.json        # Dependencies
+├── Dockerfile          # Container config
+└── cloudbuild.yaml     # Auto-deploy config
 ```
 
-## 🔧 Configuration
+## License
 
-The app automatically:
-- Uses Cloud Run's PORT environment variable
-- Scales to zero when idle
-- Handles CORS for iCloud API
-- Proxies downloads to bypass CORS
-
-## 🌍 Custom Domain
-
-After deploying, you can map a custom domain:
-
-1. Go to Cloud Run console
-2. Select your service
-3. Click "Manage Custom Domains"
-4. Follow the DNS setup instructions
-
-## 📊 Monitoring
-
-View your deployment:
-- **Service:** https://console.cloud.google.com/run
-- **Logs:** Cloud Run → Your Service → Logs tab
-- **Metrics:** Cloud Run → Your Service → Metrics tab
-
-## 🤝 Contributing
-
-Contributions welcome! Feel free to:
-- Report bugs
-- Suggest features
-- Submit pull requests
-
-## 📝 License
-
-MIT License - feel free to use for any purpose!
-
-## 🆘 Support
-
-- **Issues:** Open a GitHub issue
-- **Docs:** See [GITHUB-DEPLOY.md](GITHUB-DEPLOY.md)
-- **Cloud Run:** https://cloud.google.com/run/docs
+MIT - Use freely for any purpose!
 
 ---
 
-Made with ❤️ | Powered by Google Cloud Run
+<div align="center">
+  Made with ❤️ | Powered by <a href="https://cloud.google.com/run">Google Cloud Run</a>
+</div>

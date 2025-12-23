@@ -1820,7 +1820,7 @@
                                                 loading={priorityPhotoIds.has(photo.id) ? "eager" : "lazy"}
                                                 onLoad={() => handleImageLoad(photo.id)}
                                             />
-                                            {loadedPhotos[photo.id] && squareSize >= 48 && (
+                                            {loadedPhotos[photo.id] && squareSize >= 72 && (
                                                 <button
                                                     className="thumbnail-download"
                                                     style={styles.thumbnailDownload}

@@ -472,6 +472,7 @@
             const [sortOrder, setSortOrder] = useState('newest');
             const [videoDurations, setVideoDurations] = useState({});
             const [copiedUrl, setCopiedUrl] = useState(false);
+            const [priorityPhotoIds, setPriorityPhotoIds] = useState(new Set());
 
             // Calculate grid padding based on approximate square size
             const getGridPadding = () => {
@@ -764,6 +765,52 @@
                     }, 400);
                 }
             }, [selectedPhoto]);
+
+            // Prioritize loading selected photo in overlay
+            useEffect(() => {
+                if (selectedPhoto) {
+                    setPriorityPhotoIds(new Set([selectedPhoto.id]));
+                    
+                    // Preload the full resolution image/video for immediate display
+                    const mediaUrl = selectedPhoto.isVideo 
+                        ? (selectedPhoto.videoUrl || selectedPhoto.fullUrl)
+                        : (selectedPhoto.fullUrl || selectedPhoto.thumbnail);
+                    
+                    if (mediaUrl) {
+                        const link = document.createElement('link');
+                        link.rel = 'preload';
+                        link.as = selectedPhoto.isVideo ? 'video' : 'image';
+                        link.href = mediaUrl;
+                        document.head.appendChild(link);
+                        
+                        // Cleanup
+                        return () => {
+                            document.head.removeChild(link);
+                        };
+                    }
+                }
+            }, [selectedPhoto]);
+
+            // Prioritize loading visible photos when sort order or filters change
+            useEffect(() => {
+                if (sortedPhotos.length > 0) {
+                    // Priority load first 20 photos (first few rows)
+                    const visibleIds = sortedPhotos.slice(0, 20).map(p => p.id);
+                    setPriorityPhotoIds(new Set(visibleIds));
+                }
+            }, [sortOrder, selectedMediaTypes, selectedContributors, sortedPhotos.length]);
+
+            // Clear priority after photos load
+            useEffect(() => {
+                if (priorityPhotoIds.size > 0) {
+                    const allLoaded = Array.from(priorityPhotoIds).every(id => 
+                        loadedPhotos[id] || overlayLoadedPhotos[id]
+                    );
+                    if (allLoaded) {
+                        setPriorityPhotoIds(new Set());
+                    }
+                }
+            }, [loadedPhotos, overlayLoadedPhotos, priorityPhotoIds]);
 
             // Close download menu when clicking outside
             useEffect(() => {
@@ -1728,6 +1775,7 @@
                                                     ...styles.photoImage,
                                                     opacity: loadedPhotos[photo.id] ? 1 : 0
                                                 }}
+                                                loading={priorityPhotoIds.has(photo.id) ? "eager" : "lazy"}
                                                 onLoad={() => handleImageLoad(photo.id)}
                                             />
                                             {loadedPhotos[photo.id] && (
@@ -2065,6 +2113,7 @@
                                     }
                                     controls
                                     playsInline
+                                    preload="auto"
                                     onLoadedData={() => handleOverlayImageLoad(selectedPhoto.id)}
                                 />
                             ) : (
@@ -2081,6 +2130,8 @@
                                         swipeDirection === 'right' ? 'swipe-in-from-left' : 
                                         isOpeningFromGrid ? 'scale-in' : ''
                                     }
+                                    fetchpriority="high"
+                                    loading="eager"
                                     onLoad={() => handleOverlayImageLoad(selectedPhoto.id)}
                                 />
                             )}

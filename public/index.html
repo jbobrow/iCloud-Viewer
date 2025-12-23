@@ -193,6 +193,13 @@
             opacity: 1 !important;
         }
 
+        /* Hide thumbnail download on touch devices (mobile) */
+        @media (hover: none) and (pointer: coarse) {
+            .thumbnail-download {
+                display: none !important;
+            }
+        }
+
         .download-menu-item:hover {
             background: rgba(0, 122, 255, 0.1) !important;
         }
@@ -505,6 +512,7 @@
             const [selectedContributors, setSelectedContributors] = useState(new Set());
             const [contributors, setContributors] = useState([]);
             const filterMenuRef = useRef(null);
+            const [filterMenuStyle, setFilterMenuStyle] = useState({});
 
             // Update grid padding and square size when columns change
             useEffect(() => {
@@ -846,6 +854,35 @@
             // Close filter menu when clicking outside
             useEffect(() => {
                 if (!showFilterMenu) return;
+
+                // Calculate position to ensure menu stays on screen
+                const calculatePosition = () => {
+                    if (!filterMenuRef.current) return;
+                    
+                    const button = filterMenuRef.current.querySelector('button');
+                    if (!button) return;
+                    
+                    const buttonRect = button.getBoundingClientRect();
+                    const menuWidth = 240; // min width of menu
+                    const padding = 16; // padding from edge
+                    
+                    // Check if menu would overflow on the right
+                    const wouldOverflowRight = buttonRect.right < menuWidth + padding;
+                    
+                    if (wouldOverflowRight) {
+                        // Position menu to the left, ensuring it doesn't overflow left edge
+                        const leftPosition = Math.max(padding, buttonRect.right - menuWidth);
+                        setFilterMenuStyle({
+                            right: 'auto',
+                            left: `${leftPosition - buttonRect.left}px`
+                        });
+                    } else {
+                        setFilterMenuStyle({});
+                    }
+                };
+                
+                // Calculate position after menu renders
+                setTimeout(calculatePosition, 0);
 
                 const handleClickOutside = (e) => {
                     if (filterMenuRef.current && !filterMenuRef.current.contains(e.target)) {
@@ -1391,7 +1428,9 @@
                     alignItems: 'center',
                     justifyContent: 'space-between',
                     padding: '16px 20px',
-                    background: 'transparent'
+                    background: `linear-gradient(to bottom, ${darkMode ? 'rgba(0,0,0,0.8)' : 'rgba(255,255,255,0.8)'} 0%, transparent 100%)`,
+                    zIndex: 10,
+                    pointerEvents: 'none' // Allow clicks to pass through to media
                 },
                 backButton: {
                     background: 'none',
@@ -1402,14 +1441,16 @@
                     alignItems: 'center',
                     gap: '6px',
                     color: '#007aff',
-                    fontSize: '17px'
+                    fontSize: '17px',
+                    pointerEvents: 'auto' // Re-enable clicks on button
                 },
                 downloadButton: {
                     background: 'none',
                     border: 'none',
                     cursor: 'pointer',
                     padding: '8px',
-                    color: '#007aff'
+                    color: '#007aff',
+                    pointerEvents: 'auto' // Re-enable clicks on button
                 },
                 overlayImage: {
                     position: 'absolute',
@@ -1511,6 +1552,7 @@
                     boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
                     border: `1px solid ${darkMode ? '#333' : '#e5e5e5'}`,
                     minWidth: '240px',
+                    maxWidth: 'calc(100vw - 32px)',
                     overflow: 'hidden',
                     zIndex: 100
                 },
@@ -1832,7 +1874,7 @@
                                             {hasActiveFilters && <div style={styles.activeFilterBadge} />}
                                         </button>
                                         {showFilterMenu && (
-                                            <div style={styles.filterMenu}>
+                                            <div style={{...styles.filterMenu, ...filterMenuStyle}}>
                                                 {/* Media Type Filter */}
                                                 <div style={styles.filterSection}>
                                                     <div style={styles.filterSectionTitle}>
